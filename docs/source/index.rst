@@ -1,6 +1,8 @@
 Welcome to EducationApp (A very Creative name)
 ===================================
 
+Hello - MJ
+
 
 .. building::
    First clone the repo. 
