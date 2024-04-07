@@ -9,13 +9,13 @@ LoginPage.dart
 The first interactable page after the splash page. This page is managed by Firebase and its corresponding database.
 
 The login page has to interact with the database and actively monitor the input fields in a stateful widget (mutable).
-.. code-block:: console
 
+.. code-block:: dart
    class _LoginPageState extends State<LoginPage> {
-        final FirebaseAuth _auth = FirebaseAuth.instance;
-        final TextEditingController _emailController = TextEditingController();
-        final TextEditingController _passwordController = TextEditingController();
-        final _formKey = GlobalKey<FormState>();
+      final FirebaseAuth _auth = FirebaseAuth.instance;
+      final TextEditingController _emailController = TextEditingController();
+      final TextEditingController _passwordController = TextEditingController();
+      final _formKey = GlobalKey<FormState>();
 
 Creating recipes
 ----------------
