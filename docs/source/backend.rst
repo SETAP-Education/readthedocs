@@ -75,24 +75,79 @@ This code snippet actually validates the email and password fields to move them 
 RegistrationPage.dart
 ---------------------
 
-To retrieve a list of random ingredients,
-you can use the ``lumache.get_random_ingredients()`` function:
+.. code-block:: dart
 
-.. autofunction:: lumache.get_random_ingredients
+   Future<void> _register() async {
+       try {
+         UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+           email: _emailController.text,
+           password: _passwordController.text,
+         );
+   
+         User? user = userCredential.user;
+   
+         if (user != null) {
+           await _createDatabase();
+           Navigator.pushReplacement(
+             context,
+             MaterialPageRoute(builder: (context) => LandingPage()),
+           );
+         }
 
-The ``kind`` parameter should be either ``"meat"``, ``"fish"``,
-or ``"veggies"``. Otherwise, :py:func:`lumache.get_random_ingredients`
-will raise an exception.
+Here, the ``_register()`` function attempts to take the input credentials from the fields and place them into the Firebase database. given ``user != null``, it will create an entry in the database and automatically log them into the application.
 
-.. autoexception:: lumache.InvalidKindError
+.. code-block:: dart
 
-For example:
+   } catch (e) {
+         print("Registration failed: $e");
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+             content: Text("Registration failed. Please try again."),
+             duration: Duration(seconds: 3),
 
->>> import lumache
->>> lumache.get_random_ingredients()
-['shells', 'gorgonzola', 'parsley']
+Should the entry be null, it will display an error for 3 seconds.
 
-Yeah
+.. _Landing Page:
+
+LandingPage.dart
 ----------------
-i was here - up2112135
 
+.. code-block:: dart
+
+   class _LandingPageState extends State<LandingPage> {
+     User? _user;
+   
+     final QuizManager quizManager = QuizManager();
+   
+     @override
+     void initState() {
+       super.initState();
+       _checkAuthState();
+     }
+   
+     void _checkAuthState() {
+       FirebaseAuth.instance.authStateChanges().listen((User? user) {
+         if (mounted) {
+           setState(() {
+             _user = user; // Set the current user
+           });
+
+Inside the Landing Page widget, there are listeners for ``authStateChanges()`` that alter the UI depending on the authentication states of the ``User`` variable. This class also creates an instance of the ``QuizManager`` which shows various quizzes and quiz data thata is retrieved from the datastore associated with the user.
+
+.. _Quiz Page:
+
+quiz.dart
+---------
+
+The main logic of the quizzes users will interact with.
+
+.. code-block:: dart
+
+   class QuestionAnswer {
+   
+     void debugPrint() {}
+   
+     Map<String, dynamic> toFirestore() { return {}; }
+   }
+
+The ``QuestionAnswer`` class is responsible for taking user input and converting it to a format that makes it suitable for use in the Firestore database.
