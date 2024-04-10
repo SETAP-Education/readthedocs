@@ -182,3 +182,216 @@ The ``QuestionAnswer`` class is responsible for taking user input and converting
          );
 
 Here a map is formed to make a keypair of the options and correct answers to be placed in the Firestore. The factory option also creates a QuestionMultipleChoice object from the Firestore map, allowing for flexible conversion of data from the app and the database.
+
+.. code-block:: dart
+
+  String questionText = ""; 
+
+  // This is the type of question. This determines how the question will be displayed/answered
+  QuestionType type = QuestionType.none; 
+
+  // Stores the difficulty of the question 
+  int difficulty = 0; 
+
+  // List of tags/topics for sorting
+  List<String> tags = List.empty(growable: true);
+
+  QuestionAnswer answer = QuestionAnswer();
+
+Here the basic parameters that make up a ``Question`` are initialised. These values are then converted and mapped to a Firestore format much like the previous examples.
+
+.. code-block:: dart
+
+    question.questionText = data["questionText"];
+    question.type = QuestionType.values[data["type"]];
+    question.difficulty = data.containsKey("difficulty") ? data["difficulty"] : 0;
+    question.tags = data["tags"] is Iterable ? List.from(data["tags"]) : List.empty();
+
+    if (question.type == QuestionType.multipleChoice) {
+      question.answer = QuestionMultipleChoice.fromMap(data["answer"]);
+    }
+
+    return question;
+
+Here data is retrieved from the Firestore using a ``factory`` constructor to assign various properties to `QuizQuestion`, adding extra variables should the question be of the `multipleChoice` type. This then creates a ``QuizQuestion`` object that is used throughout the application.
+
+.. code-block:: dart
+
+   class Quiz { 
+   
+     Quiz();
+   
+     // Name/Id of the Quiz
+     String name = ""; 
+   
+     // Quiz creator if any
+     // Can be null
+     String? creator;
+   
+     // The share code 
+     // Can be null
+     String? shareCode;
+   
+     // Quizzes can be tagged for specific topics
+     List<String> tags = List.empty(growable: true);
+   
+     // Store a List of Ids to questions
+     // These questions will be stored outside of the quiz
+     List<String> questionIds = List.empty(growable: true); 
+   
+   
+     // This is not stored in the database and is loaded later when the quiz starts 
+     List<QuizQuestion> loadedQuestions = List.empty(growable: true);
+
+In a similar fashion to the question structure, here we have the function that generates the quiz itself, including variables like ``creator`` and ``shareCode`` which identifies the quiz through "metadata".
+
+.. code-block:: dart
+
+  // Get the number of questions in the quiz
+  int length() { 
+    return questionIds.length;
+  }
+
+  // Returns a string for the name of the creator
+  // or if its auto generated it returns "Auto-Generated"
+  String getCreator() {
+    return isQuizGenerated() ? "Auto-Generated" : creator!;
+  }
+
+  // This returns the sharecode if it exists 
+  // If it does not exist it returns an empty string 
+  String getShareCode() {
+    return shareCode != null ? shareCode! : "";
+  }
+
+  // Get if the quiz is generated or is user created
+  bool isQuizGenerated() {
+    return creator == null ? true : false; 
+  }
+
+The quiz properties differ to the question properties as some of its "metadata" would be viewed outside of the context it's contained in, such as the ``creator`` being displayed in the description of the quiz. Hence the use of getters. The method of retrieving these variables from the firestore are identical to the ``Quiz`` example above.
+
+.. _Quiz Manager:
+
+quizManager.dart
+----------------
+
+The quiz manager is focused on collating the quizzes together and retrieving them based on their properties through "tags" such as ``difficulty`` and ``shareCode`` which all take part in identifying an individual quiz.
+
+.. code-block:: dart
+
+   class QuizManager {
+     // Searches for quizzes with the specified tags
+     // Returns an empty list if none exist
+     Future<List<Quiz>> getQuizzesWithTags(List<String> tags) {
+       return Future(() => List.empty());
+     }
+
+The ``QuizManager`` class picks through the tagging system and converts Firestore data into outputs the manager can compare with user input to.
+
+.. code-block:: dart
+
+   // Grab the object with a converter
+       var quizRef = await db
+           .collection("quizzes")
+           .doc(id)
+           .withConverter(
+               fromFirestore: Quiz.fromFirestore,
+               toFirestore: (Quiz quiz, _) => quiz.toFirestore())
+           .get();
+   
+       // Test if the quiz exists
+       // If it doesn't return null
+       if (!quizRef.exists) {
+         return Future(() => null);
+       }
+
+``withConverter`` can intercahnge between the object and the database fields. We take the converted parameters and test against various conditionals such as if the reference exists (if no, return null). This is done with all the search parameters for quizzes.
+
+.. _Level Logic:
+
+levellogic.dart
+---------------
+
+This file refers to the logic inside the ranking system each user has. It's initialised with
+
+.. code-block:: dart
+
+   int xp = 10;
+   int level = 0;
+   String rank = '';
+   // max level is 10
+   bool reachedMaxLevel = false;
+
+Users have a number, a written rank name associated with the xp number and a maxLevel cap that turns on a boolean.
+
+.. code-block:: dart
+   
+   void setXp(int quizXp){
+     xp += quizXp;
+   
+     // check if level has changed
+     if(checkIfLeveledUp() == true){
+       if(reachedMaxLevel == true){
+         // print 'congrats! you have leveled up as far as possible' message
+       }
+       else{
+         // print 'congrats! you leveled up' message
+       }
+     }
+   
+     level = setLevel();
+     rank = setRank();
+
+This function is called after the user completes a quiz and updates their xp level according to their performance which is decided by the quiz/questions. There is also a boolean check if the xp increases rank or reaches max level.
+
+.. code-block:: dart
+   
+   int setLevel(){
+     List<int> levels = [100,300,500,1000,1500,2250,3000,4000,5000,7000];
+     int currentLevel = 0;
+     for(int i=0;i<=9;i++){
+       if(xp < levels[i]){
+         currentLevel = i;
+         break;
+       }
+       else{
+         currentLevel = 10;
+         reachedMaxLevel = true;
+       }
+     }
+     return currentLevel;
+   }
+
+``setLevel`` is called whenever xp changes, which is used often in the other functions such as ``setXp``. This also sets the rank boundaries that divide the string rank names below:
+
+.. code-block:: dart
+   
+   String setRank(){
+     List<String> rankList = ['Copper', 'Silver', 'Gold', 'Pearl', 'Jade', 'Ruby', 'Sapphire', 'Emerald', 'Opal', 'Diamond'];
+     String rank = '';
+     for(int i=0;i<=9;i++){
+       if(level == i){
+         rank = rankList[i];
+       }
+     }
+     return rank;
+
+
+.. _Main:
+
+main.dart
+---------
+There is not much in terms of backend for the ``main.dart`` file. It's responsible for initialising the frontend widgets as well as the Firebase services the application uses often.
+
+.. code-block:: dart
+   
+   void main() async {
+     WidgetsFlutterBinding.ensureInitialized();
+     
+     await Firebase.initializeApp(
+       options: DefaultFirebaseOptions.currentPlatform,
+     );
+     
+     runApp(const MyApp());
+   }
