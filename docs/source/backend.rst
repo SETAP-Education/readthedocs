@@ -150,4 +150,35 @@ The main logic of the quizzes users will interact with.
      Map<String, dynamic> toFirestore() { return {}; }
    }
 
-The ``QuestionAnswer`` class is responsible for taking user input and converting it to a format that makes it suitable for use in the Firestore database.
+The ``QuestionAnswer`` class is responsible for taking user input and converting it to a format that makes it suitable for use in the Firestore database. ``Map<String, dynamic> toFirestore()`` makes this conversion.
+
+.. code-block:: dart
+
+class QuestionMultipleChoice extends QuestionAnswer {
+
+  QuestionMultipleChoice({ required this.options, required this.correctAnswers });
+
+  // Multiple choice have multiple options
+  // and also a list of correct answers in case 1 or more is correct
+  // Probably should detect if there is 1 or more and display UI accordingly
+  List<String> options;
+  List<int> correctAnswers; 
+
+``QuestionMultipleChoice`` is a subclass of ``QuestionAnswer`` that creates the logic of a multiple choice question. The options the user chooses are represented as strings whereas the number of options (from 1 to n) are represented as integers.
+
+.. code-block:: dart
+
+Map<String, dynamic> toFirestore() {
+    return {
+      "options": options, 
+      "correctAnswers": correctAnswers
+    };
+  }
+
+  factory QuestionMultipleChoice.fromMap(Map<String, dynamic> map) {
+    return QuestionMultipleChoice(
+        options: map["options"] is Iterable ? List.from(map["options"]) : List.empty(), 
+        correctAnswers:  map["correctAnswers"] is Iterable ? List.from(map["correctAnswers"]) : List.empty()
+      );
+
+Here a map is formed to make a keypair of the options and correct answers to be placed in the Firestore. The factory option also creates a QuestionMultipleChoice object from the Firestore map, allowing for flexible conversion of data from the app and the database.
