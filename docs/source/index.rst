@@ -1,10 +1,6 @@
 Welcome to EducationApp (A very Creative name)
 ===================================
 
-Hello - MJ
-
-
-
 .. note::
 
    This project is under active development.
@@ -30,4 +26,4 @@ Contents
 .. toctree::
 
    backend
-   api
+   frontend
