@@ -1,5 +1,5 @@
 Backend
-=====
+=======
 
 .. _Authorisation Page Form:
 
@@ -12,6 +12,114 @@ AuthPageForm.dart
      bool _error = false;
 
 While this page is primarily built by the frontend, there is the backend variable ``bool_error`` that tracks if an error has occured on the page for the backend to handle. There are multiple instances of this to make sure the system catches any errors.
+
+
+.. _Display Name Page:
+
+DisplayNamePage.dart
+--------------------
+
+.. code-block:: dart
+
+   class _DisplayUserState extends State<DisplayUser> {
+     final TextEditingController _nameController = TextEditingController();
+     User? _user;
+     List<String> _selectedInterests = [];
+     List<String> _interestsList = [];
+     String _displayName = '';
+     QuizManager quizManager = QuizManager();
+
+Here the user state has a ``_nameController`` that controls the input for user name and credentials. Some of the variables are defined here, including ``User?`` which allows for user details to be passed without requiring a username, and required variables like ``_selectedInterests`` and ``_displayName`` that are required to the user to be identified and to produce the landing page contents. Errors are thrown if these variables are not supplied. ``quizManager`` creates an instance of the ``QuizManager()`` class that manages each instance of a generated quiz.
+
+.. code-block:: dart
+
+   void initState() {
+       super.initState();
+       _checkAuthState();
+       _fetchInterests();
+       _fetchUserData();
+     }
+
+Here the ``initState()`` checks the stateful widgets of the current user authentication, selected interests and user data such as display name and associated interests.
+
+.. code-block:: dart
+
+   void _checkAuthState() {
+       FirebaseAuth.instance.authStateChanges().listen((User? user) {
+         if (mounted) {
+           setState(() {
+             _user = user;
+             _fetchUserData(); // Fetch user data when the user changes
+           });
+
+Here this function checks if the user is authenticated on initialisation. This may occur when the session refreshes and the program checks if the user is still logged in and authorised to be logged in.
+
+.. code-block:: dart
+
+   void _fetchInterests() async {
+       try {
+         DocumentSnapshot interestsDoc = await FirebaseFirestore.instance
+             .collection('interests')
+             .doc('interests')
+             .get();
+   
+         if (interestsDoc.exists) {
+           setState(() {
+             _interestsList = List<String>.from(interestsDoc['interests']);
+           });
+
+The ``_fetchInterests()`` function check the firestore for a ``DocumentSnapshot`` that includes the list of interests users can select from. If the instance exists and is retrieved, the ``_interestsList`` variable updates. If it's not found, an error is displayed.
+
+.. code-block:: dart
+
+   void _fetchUserData() async {
+       if (_user != null) {
+         try {
+           DocumentSnapshot userDoc =
+               await FirebaseFirestore.instance.collection('users').doc(_user!.uid).get();
+   
+           if (userDoc.exists) {
+             setState(() {
+               _displayName = userDoc.get('displayName') ?? '';
+               _selectedInterests = List<String>.from(userDoc.get('interests') ?? []);
+               _nameController.text = _displayName;
+             });
+
+The same principle applies as the ``_fetchInterests`` function but instead the firestore checks if the userdata for the authenticated user exists. It retrieves the display name and user selected interests. If no user is found, an error is thrown.
+
+.. code-block:: dart
+
+   void _setDisplayName(String userId, String displayName) {
+       final users = FirebaseFirestore.instance.collection('users');
+       users.doc(userId).set({ //sets display name
+         'displayName': displayName,
+       }, SetOptions(merge: true)).then((_) {
+         print('Display Name set successfully!');
+       }).catchError((error) {
+         print('Failed to set Display Name: $error');
+
+This function takes the user details from ``FirebaseFirestore.instance.collection('users')`` and reassigns the display name from user input using ``users.doc(userId).set(
+'displayName': displayName,}`` This then updates on userId which is then converted back to the firestore.
+
+.. code-block:: dart
+
+   void _saveInterests(String userId, List<String> interests) {
+       final users = FirebaseFirestore.instance.collection('users');
+   
+       // Saving the interests for the user
+       users.doc(userId).set({
+         'interests': interests,
+       }, void _saveInterests(String userId, List<String> interests) {
+    final users = FirebaseFirestore.instance.collection('users');
+
+    // Saving the interests for the user
+    users.doc(userId).set({
+      'interests': interests,
+    }, SetOptions(merge: true)).then((_) {
+      print('Interests saved successfully!');.then((_) {
+         print('Interests saved successfully!');
+
+The same as above, but instead the variables manupulated are the ``List,String. interests`` which are selected using buttons. Once this is retrieved, it's stored using ``SetOptions(merge: true))`` which ensures only the selected fields are updated and the other fields are left untouched.
 
 .. _Login Page:
 
