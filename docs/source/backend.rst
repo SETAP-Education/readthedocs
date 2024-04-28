@@ -255,6 +255,38 @@ Here, the ``_register()`` function attempts to take the input credentials from t
 
 Should the entry be null, it will display an error for 3 seconds.
 
+.. code-block:: dart
+   
+   Future<void> _register() async {
+       try {
+   
+         bool satisfysMinCharacters = _passwordController.text.length >= minCharacters;
+         bool hasOneNumber = _passwordController.text.contains(RegExp(r'[0-9]'));
+   
+         if (!satisfysMinCharacters || !hasOneNumber) {
+           // Password does not satisfy constraints 
+   
+           globalErrorManager.pushError("Bad password");
+
+The ``_register()`` function contains various constraints the user has to adhere to to register. In the example above, the user must ``satisfyMinCharacters`` defined in the ``_passwordController.text.length`` and meet the boolean ``hasOneNumber`` ranging from 0 to 9. Should the user not meet these requirements, an error is thrown and the user is prompted to try a different password. In the frontend, a cross and checkmark icon tracks the user's progress in fulfilling the requirements.
+
+.. code-block:: dart
+
+   UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+           email: _emailController.text,
+           password: _passwordController.text,
+         );
+   
+         User? user = userCredential.user;
+   
+         if (user != null) {
+           await _createDatabase();
+           Navigator.pushReplacement(
+             context,
+             MaterialPageRoute(builder: (context) => DisplayUser()),
+
+If all goes well, Firebase is called to create a user in the database with ``userCredential`` and the ``_createDatabase()`` function. Once that process is complete, the page navigates to the ``DisplayUser()`` function located in the ``DisplayNamePage.dart`` file.
+
 .. _Landing Page:
 
 LandingPage.dart
