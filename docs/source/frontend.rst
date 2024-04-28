@@ -1,6 +1,56 @@
 Frontend
 ========
 
+Overview
+========
+The front end of this application has been standardised across pages with a clear design focus. This doc will cover some of the front end choices and inner workings, but in terms of what you can expect to see throughout the app, you can find:
+
+Fonts
+-----
+Google fonts: Nunito ver. 6.2.1
+
+Colours
+-------
+Split into two themes (light and dark), we aimed to make the theme colours cohesive in both modes of use.
+
+**Light**
+
+Primary Colour: 0xFF19c37d   
+
+Secondary Colour: 0xFF333333
+
+Primary Container Colour: ARGB(255, 255, 255, 255)
+
+Secondary Container Colour: ARGB(255, 231, 231, 231)
+
+Error Colour: FF9800FF
+
+Background Colour: ARGB(255, 230, 231, 236)
+
+Text Colour: 0xFF333333
+
+**Dark**
+
+Primary Colour: 0xFF19c37d   
+
+Secondary Colour: 0xFFE7E7E7
+
+Primary Container Colour: 0xFF202226
+
+Secondary Container Colour: ARGB(255, 65, 68, 74)
+
+Error Colour: FF9800FF
+
+Background Colour: 0xFF131517
+
+Text Colour: 0xFFE7E7E7
+
+Iconography
+-----------
+
+
+Pages
+=====
 .. _Authorisation Page Form:
 
 AuthPageForm.dart
@@ -39,3 +89,57 @@ This section of the code is responsible for setting out the constraints of the a
                  child: widget.child
 
 Here the layout for the image is placed into a ``SizedBox`` to maintain aspect ratio at 400 x 400 px. ``widget.child`` represents the layout for the form fields, adding insets that place it away from the image child. This function prepares the cohesive layout of the splash, registration and login forms that allows them to be filled with their relevant fields.
+
+.. _Display Name Page:
+
+DisplayNamePage.dart
+--------------------
+
+This page is mainly responsible for handling the adjustment of the user's display name and selected interests.
+
+.. code-block:: dart
+
+   Text("What should we call you?",
+                                 style: GoogleFonts.nunito(
+                                     fontSize: 26, fontWeight: FontWeight.w600))
+                           ],
+                         ),
+                     ),
+                   SizedBox(height: 20),
+                   Center(
+                     child: Container(
+                       width: 600,
+                       child: TextFormField(
+                         controller: _nameController,
+                         decoration: InputDecoration(
+                           labelText: 'Display Name',
+
+Text input is decorated and uniform, using the Google font ``nunito`` across the application. Cohesive font sizes and weights are also used across the application.
+
+.. code-block:: dart
+   
+   SizedBox(height: 20),
+                       Center(
+                         child: Button(
+                           width: 400,
+                           important: true,
+                           onClick: () {
+                             // Get the entered display name
+                             String displayName = _nameController.text.trim();
+   
+                             // Check if display name or interests are empty
+                             if (displayName.isEmpty) {
+                                 // Add an error message to the error manager
+                                 print("No display name");
+                                 globalErrorManager.pushError('Display name cannot be empty');
+                             } else if (_selectedInterests.isEmpty) {
+                                 // Add an error message to the error manager
+                                 print("No interests");
+                                 globalErrorManager.pushError('You must select at least one interest');
+                             } else {
+                                 // If there are no errors, proceed with setting the display name and interests
+                                 _setDisplayName(_user!.uid, displayName);
+                                 _saveInterests(_user!.uid, _selectedInterests);
+
+Here is the majority of the error handling relating to user input is managed. The text field is checked with ``displayname.isEmpty`` and the button field for interests is checked with ``_selectedInterests.isEmpty``. Direct feedback is given back to the user and once the requirements are satisfied, the user is moved onto a diagnostic test (as a new user).
+
