@@ -582,3 +582,43 @@ At the top of the landing page, a banner is generated that allows the user to ta
                                                                return QuizPage(quizId: id);
 
 The ``interests`` container is created here, with the user's selected interests being retrieved with ``snapshot.data``. The interests are sorted in a grid and placed in ``InkWell`` containers. Selecting one of these interests will ``generateQuiz`` of said interests at the index selected and move the user to the ``QuizPage``. This structure is exactly the same for "other interests".
+
+
+.. _Splash Page:
+
+SplashPage.dart
+-------------
+
+.. code-block:: dart
+
+
+   Column (
+                   mainAxisAlignment: MainAxisAlignment.center,
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Text("Welcome to", style: GoogleFonts.nunito(
+                           fontSize: 30.0,
+                           fontWeight: FontWeight.bold,
+                           fontStyle: FontStyle.italic,
+                           color: secondaryColour
+                         )),
+   
+                     Text(
+                       'Quizzical 🎓!',
+                       style: GoogleFonts.nunito(
+                         fontSize: 60.0,
+                         fontWeight: FontWeight.bold,
+                         color: secondaryColour
+                       ),
+                     ),
+                     SizedBox(height: 10),
+   
+                      Text(
+                       'Learning doesn\'t have to be boring!',
+                       style: GoogleFonts.nunito(
+                         fontSize: 24.0,
+                         fontWeight: FontWeight.w600,
+                         fontStyle: FontStyle.italic
+                       ),
+
+Makes up the large splash text that the user is shown upon opening the application for the first time. This page is mainly populated by other files such as ``RegistrationPage.dart`` and ``LoginPage.dart``.
