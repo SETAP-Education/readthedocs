@@ -393,36 +393,36 @@ Here a quiz is loaded using the ``quizManager`` functions to build the structure
 
 .. code-block:: dart
 
-void moveToNextOrSubmit() async {
-    if (currentQuestionIndex >= loadedQuestions.length) {
-      // Prevents accessing an index that is out of bounds
-      return;
-    }
-
-    QuizQuestion currentQuestion = loadedQuestions[currentQuestionIndex];
-    String questionId = quiz.questionIds[currentQuestionIndex]; // Get the correct questionId
-
-    Map<String, dynamic> questionSummary;
-
-    if (currentQuestion.type == QuestionType.multipleChoice) {
-      if (currentQuestion.answer is QuestionMultipleChoice) {
-        questionSummary = checkUserAnswers(
-          currentQuestion,
-          questionId,
-          currentQuestion.type,
-          userSummary,
-        );
-      } else {
-        print("Error: Incorrect question type for multiple-choice question.");
-        return;
-      }
-    } else if (currentQuestion.type == QuestionType.fillInTheBlank) {
-      if (currentQuestion.answer is QuestionFillInTheBlank) {
-        questionSummary = checkUserAnswers(
-          currentQuestion,
-          questionId,
-          currentQuestion.type,
-          userSummary,
+   void moveToNextOrSubmit() async {
+       if (currentQuestionIndex >= loadedQuestions.length) {
+         // Prevents accessing an index that is out of bounds
+         return;
+       }
+   
+       QuizQuestion currentQuestion = loadedQuestions[currentQuestionIndex];
+       String questionId = quiz.questionIds[currentQuestionIndex]; // Get the correct questionId
+   
+       Map<String, dynamic> questionSummary;
+   
+       if (currentQuestion.type == QuestionType.multipleChoice) {
+         if (currentQuestion.answer is QuestionMultipleChoice) {
+           questionSummary = checkUserAnswers(
+             currentQuestion,
+             questionId,
+             currentQuestion.type,
+             userSummary,
+           );
+         } else {
+           print("Error: Incorrect question type for multiple-choice question.");
+           return;
+         }
+       } else if (currentQuestion.type == QuestionType.fillInTheBlank) {
+         if (currentQuestion.answer is QuestionFillInTheBlank) {
+           questionSummary = checkUserAnswers(
+             currentQuestion,
+             questionId,
+             currentQuestion.type,
+             userSummary,
 
 This function handles the navigaton inside the quiz, moving between question numbers. ``currentQuestionIndex >= loadedQuestions.length`` makes sure the navigation cannot progress past the total number of questions. ``questionSummary`` accounts for the responses to that particular question whereas ``userSummary`` evaluates answers across the whole quiz. There are two conditionals for the two ``QuestionTypes`` that handle input differently.
 
@@ -442,7 +442,92 @@ This function handles the navigaton inside the quiz, moving between question num
          await storeUserAnswersInFirebase(userSummary);
          Map<String, dynamic> quizAttemptData = createQuizAttemptData(userSummary);
 
-WIP HERE
+The conditional checks if the user is on a question that is not the last. If that's the case ``quizCompleted = false`` when pressing buttons to progress. If it's anything else i.e. the final question, it will complete the quiz upon progression.
+
+.. code-block:: dart
+
+   Map<String, dynamic> createQuizAttemptData(Map<String, dynamic> userSummary) {
+       int quizTotal = loadedQuestions.length;
+   
+       return {
+         'timestamp': FieldValue.serverTimestamp(),
+         'userResults': {
+           'quizTotal': quizTotal,  // Update this with the actual maximum points
+           'userTotal': calculateUserTotal(userSummary),
+         },
+         'userSummary': userSummary,
+       };
+
+After the quiz is labelled as completed, it will compile the metadata of the quiz and send it to ``QuizSummaryPage.dart``.
+
+.. code-block:: dart
+   
+   Map<String, dynamic> quizAttemptData = {
+           'timestamp': FieldValue.serverTimestamp(),
+           'userResults': {
+             'quizTotal': quizTotal, // Update this with the actual number of questions
+             'userTotal': calculateUserTotal(userSummary),
+           },
+           'userSummary': userSummary,
+         };
+   
+         // Store data in Firebase
+         await quizAttemptDocument.set(quizAttemptData);
+   
+         // Calculate the User XP to add
+   
+   
+         int xpGain = calculateXpGain(userSummary, widget.multiplier);
+   
+         earnedXp = xpGain; 
+
+This code "snapshots" the user data after compiling the quiz and sends it back to the Firestore using ``quizAttemptDocument.set(quizAttemptData)``. This will then be retrieved for the summary page and any time the user wants to review a quiz attempt.
+
+.. code-block:: dart
+
+   var userDoc = await FirebaseFirestore.instance.collection("users").doc(userId).get();
+         int currentXp = 0; 
+   
+         if (userDoc.data() != null) {
+           if (userDoc.data()!.containsKey("xpLvl")) {
+             currentXp = userDoc.data()!["xpLvl"];
+           }
+         }
+   
+         currentXp += xpGain;
+   
+         FirebaseFirestore.instance.collection("users").doc(userId).update({ "xpLvl": currentXp }, );
+
+This code snippet retrieves the ``currentXp`` from user data and takes the ``xpGain`` generated from the quiz attempt to apply to the user's account. Once the user returns to the landing page, their Xp should update accordingly.
+
+.. code-block:: dart
+
+   userSummary.forEach((questionId, details) {
+         if (details['correctIncorrect'] == 'Correct') {
+           userTotal += 1;
+         }
+       });
+   
+       return userTotal;
+     }
+   
+     int calculateXpGain(Map<String, dynamic> userSummary, double multiplier) {
+       int xp = 0; 
+   
+       userSummary.forEach((questionId, details) {
+         if (details['correctIncorrect'] == 'Correct') {
+           var q = loadedQuestions.where((element)  { return element.questionId == questionId; });
+           xp +=  q.first.difficulty;
+         }
+       });
+   
+       xp = xp ~/ loadedQuestions.length;
+   
+       xp = (xp.toDouble() * multiplier).toInt();
+   
+       return xp;
+
+The precise calculation is outlined here. ``userTotal`` is defined by the amount of answers the user got correct. This is then returned and used in ``calculateXpGain`` in ``userSummary``. 
 
 .. _Landing Page:
 
