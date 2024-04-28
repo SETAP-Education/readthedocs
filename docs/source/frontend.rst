@@ -518,3 +518,67 @@ The ``multipleChoice`` question type makes use of selectable ``InkWell`` and ``C
              fillColor: primaryColour,
 
 The ``fillInTheBlank`` question type uses a ``TextField`` widget that can then be retrieved and tested against the answer stored in the database.
+
+.. _Landing Page:
+
+LandingPage.dart
+----------------
+
+.. code-block:: dart
+
+   Container(
+                                               decoration: BoxDecoration(
+                                                 borderRadius: BorderRadius.circular(12),
+                                                 color: Theme.of(context).colorScheme.primary
+                                               ),
+                                               padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 6.0),
+                                               child: Text("Review", style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w800))
+                                             ),
+                                             SizedBox(height: 12.0),
+                                             Text("Take a review of all topics and difficulties to see how much you've improved!", style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold)),
+                                             SizedBox(height: 6.0),
+                                             Text("8 Questions • ${userInterests.toString().substring(1, userInterests.toString().length - 1)}", style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary))
+
+At the top of the landing page, a banner is generated that allows the user to take a special quiz of ``8 questions`` in length comprised of their ``userInterests``. It's generated the same as any other quiz in the backend and labelled ``Review``.
+
+.. code-block:: dart
+   
+   Text(
+                                       'Pick a topic to begin a quiz!',
+                                       style: GoogleFonts.nunito(fontSize: 18),
+                                     ),
+   
+                                     const SizedBox(height: 20),
+                                     FutureBuilder<List<String>>(
+                                       future: Future.value(userInterests),
+                                       builder: (context, snapshot) {
+                                         if (snapshot.connectionState == ConnectionState.waiting) {
+                                           return Center(child: CircularProgressIndicator());
+                                         } else if (snapshot.hasError) {
+                                           return Center(child: Text('Error loading interests'));
+                                         } else {
+                                           List<String> interests = snapshot.data ?? [];
+                                           int numInterests = interests.length;
+                                           int numInterestsPerRow = 4; // Adjust the number of interests per row as needed
+                                           int numRows = (numInterests / numInterestsPerRow).ceil();
+                                           List<Widget> rows = List.generate(numRows, (rowIndex) {
+                                             List<Widget> rowChildren = [];
+                                             for (int i = 0; i < numInterestsPerRow; i++) {
+                                               int index = rowIndex * numInterestsPerRow + i;
+                                               const SizedBox(height: 10);
+                                               if (index < numInterests) {
+                                                 rowChildren.add(
+                                                   Flexible(
+                                                     child: Padding(
+                                                       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
+                                                       child: InkWell(
+                                                         onTap: () async {
+                                                             print('Interest ${index + 1}: ${interests[index]} pressed');
+   
+                                                             // Generate a new quiz
+                                                             String id = await quizManager.generateQuiz([ interests[index] ], xpLevel, 20, 5);
+                                                             
+                                                             Navigator.push(context, MaterialPageRoute(builder:(context) {
+                                                               return QuizPage(quizId: id);
+
+The ``interests`` container is created here, with the user's selected interests being retrieved with ``snapshot.data``. The interests are sorted in a grid and placed in ``InkWell`` containers. Selecting one of these interests will ``generateQuiz`` of said interests at the index selected and move the user to the ``QuizPage``. This structure is exactly the same for "other interests".
