@@ -246,3 +246,31 @@ While much of the login page is handled by Firebase and the cloud authentication
                            globalErrorManager.pushError("Please enter an email");
 
 More email interaction is defined here. When the email field ``isNotEmpty``, the backend will trim any spaces and send it to the backend for authentication that the email exists. If it matches, the email will be sent and a message shown to feedback that. If the email doesn't exist in the Firestore, an error is thrown that the email doesn't exists and nothing happens. The same occurs when nothing is input in the text field. The error manager can also give feedback to the user that an email has been sent through the error labelling system, even if nothing has produced an error.
+
+.. _Registration Page:
+
+RegistrationPage.dart
+--------------------
+
+The registration page is functionally the same in terms of widgets and visual design, with one big exception.
+
+.. code-block:: dart
+   
+   Widget _buildPasswordRequirement(String text, bool satisfied) {
+       return Row(
+         children: [
+           satisfied ? Icon(Icons.done, color: Colors.green,) : Icon(Icons.close, color: Colors.red),
+           const SizedBox(width: 8.0),
+           Text(text, style: GoogleFonts.nunito(color: satisfied ? Colors.grey : Theme.of(context).textTheme.bodyMedium!.color!, fontSize: 18, decoration: satisfied ?  TextDecoration.lineThrough : TextDecoration.none),)
+         ]
+
+While the user is inputting text in the password field, ``_buildPasswordRequirement`` listens and updates according to conditions set out in the backend. The widget initialises two conditions and icons with a red cross. When a condition is satisfied, it updates to a green check mark. Once both are satisfied and there are no errors in formatting and matching passwords, the account can be registered.
+
+.. code-block:: dart
+
+   child: Column(
+           crossAxisAlignment: CrossAxisAlignment.start,
+           children: [
+             _buildPasswordRequirement("Minimum of 8 characters", satisfysMinCharacters),
+             _buildPasswordRequirement("Contains a number", hasOneNumber)
+
