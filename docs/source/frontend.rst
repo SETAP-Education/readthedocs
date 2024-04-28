@@ -274,3 +274,130 @@ While the user is inputting text in the password field, ``_buildPasswordRequirem
              _buildPasswordRequirement("Minimum of 8 characters", satisfysMinCharacters),
              _buildPasswordRequirement("Contains a number", hasOneNumber)
 
+
+
+.. _Quiz Summary Page:
+
+QuizSummaryPage.dart
+---------------------
+
+.. code-block:: dart
+
+   SizedBox(height: 16.0),
+                 buildQuizResults(quizAttemptData, context),
+                 for (int i = 0; i < loadedQuestions.length; i++)
+                   FractionallySizedBox(
+                     widthFactor: 2 / 3,
+                     child: Container(
+                       margin: EdgeInsets.only(bottom: 16.0),
+                      
+                       decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(24),
+                       ),
+                       child: Padding(
+                         padding: const EdgeInsets.all(16.0),
+                         child: loadedQuestions.isNotEmpty
+                             ? buildQuizSummaryItem(loadedQuestions[i], i, quizAttemptData)
+
+The variables retrieved from the backend are passed to the frontend to build the widgets in accordance to the ``loadedQuestions``, adding a widget for each question and including the user attempt inside.
+
+.. code-block:: dart
+
+   RichText(text: TextSpan(
+                   text: "$userTotal",
+                   style: GoogleFonts.nunito(fontSize: 22.0, color: Theme.of(context).textTheme.bodyMedium!.color),
+                   children: [
+                     TextSpan(
+                       text: " / $quizTotal",
+                       style: GoogleFonts.nunito(fontSize: 16.0, color: Theme.of(context).textTheme.bodyMedium!.color!.withOpacity(0.5))
+                     ),
+                     TextSpan(
+                       text: " answered correctly",
+                       style: GoogleFonts.nunito(fontSize: 20.0, color: Theme.of(context).textTheme.bodyMedium!.color)
+                     )
+                   ]
+                 )),
+   
+                 Text("${(userTotal / quizTotal) * 100}%", style: GoogleFonts.nunito(fontSize: 32.0, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold)),
+   
+                 Row(
+                   mainAxisAlignment: MainAxisAlignment.center,
+                   crossAxisAlignment: CrossAxisAlignment.center,
+                   children: [
+                     Text("You earned:  ", style: GoogleFonts.nunito(fontSize: 22)),
+                     Text("${earnedXp}xp" , style: GoogleFonts.nunito(fontSize: 28, color: Theme.of(context).colorScheme.primary, fontStyle: FontStyle.italic, fontWeight:       FontWeight.bold))
+
+The metadata about the quiz results are displayed here including ``userTotal`` (amount of questions user got right), ``quizTotal`` (amount of questions) and ``earnedXP`` (xp earned for each right question). This is displayed at the top of the page.
+
+.. code-block:: dart
+
+   return Column(
+         crossAxisAlignment: CrossAxisAlignment.center,
+         children: [
+           SizedBox(height: 10),
+           Text(
+             question.questionText,
+             style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.bold),
+           ),
+           SizedBox(height: 20),
+           if (question.type == QuestionType.multipleChoice)
+             buildMultipleChoiceQuestion(question.answer as QuestionMultipleChoice, userResponse),
+           if (question.type == QuestionType.fillInTheBlank)
+             buildFillInTheBlankQuestion(question.answer as QuestionFillInTheBlank, userResponse),
+
+This is the actual containers that hold the question and answer responses. It will be built differently depending on whether the question type is ``multipleChoice`` or ``fillInTheBlank``.
+
+.. code-block:: dart
+   
+   return ListView.builder(
+         shrinkWrap: true,
+         physics: NeverScrollableScrollPhysics(),
+         itemCount: question.options.length,
+         itemBuilder: (context, index) {
+           String option = question.options[index];
+           bool isSelected = userResponse.contains(index);
+           bool isCorrect = question.correctAnswers.contains(index);
+   
+           Color backgroundColour = isSelected
+               ? (isSelected && isCorrect ? Colors.green : Colors.red)
+               : Colors.transparent;
+   
+           Color borderColour = isSelected
+               ? (isSelected && isCorrect ? Colors.green : Colors.red)
+               : (isCorrect ? Colors.green : Colors.grey)
+
+Here the code defines the marking criteria for multiple choice answers. When a correct answer is selected, its outline and background colour fills to green. When a wrong answer is selected, it's filled and outlined to red while the correct answer is outlined green. When there was no option selected, the correct option is outlined green while the rest are grey.
+
+
+.. code-block:: dart
+
+   Widget buildFillInTheBlankQuestion(QuestionFillInTheBlank question, String userResponse) {
+       print("The user response: ${userResponse}, The correct response: ${question.correctAnswer}");
+       print("FITB USER RESPONSE: $userResponse");
+   
+       Color backgroundColour = userResponse.isEmpty
+           ? Colors.transparent
+           : (userResponse.toLowerCase() == question.correctAnswer.toLowerCase())
+               ? Colors.green
+               : Colors.red;
+   
+       Color borderColour = userResponse.isEmpty
+           ? Colors.blue
+           : (userResponse.toLowerCase() == question.correctAnswer.toLowerCase())
+               ? Colors.green
+               : Colors.red;
+
+The same principle is applied here, but for the ``fillInTheBlank`` question type.
+
+.. code-block:: dart
+   
+   child: Center(
+           child: Text(
+             userResponse.isEmpty
+                 ? 'Not answered - The correct Answer is: "${question.correctAnswer}"'
+                 : userResponse.toLowerCase() == question.correctAnswer.toLowerCase()
+                     ? 'Correct! Your answer: ${userResponse} ✓'
+                     : 'Incorrect. Your answer: ${userResponse} ✘ | The correct Answer is: "${question.correctAnswer}"',
+
+Below the fill in the blank question, this widget takes the question and attempt data to give feedback on responses.
