@@ -538,23 +538,93 @@ LandingPage.dart
 
    class _LandingPageState extends State<LandingPage> {
      User? _user;
+     List<String> userInterests = [];
+     int xpLevel = 0; // Assuming XP level is an integer
+     late String _displayName = "Placeholder";
+     late List<String> otherTopics = [];
    
-     final QuizManager quizManager = QuizManager();
+     late List<QuizQuestion> loadedQuestions = [];
+     Map<String, dynamic> quizAttemptData = {};
+     Map<String, dynamic> userSummary = {};
+     late QuizManager quizManager;
+     String quizName = "";
+     late Quiz quiz;
    
      @override
      void initState() {
        super.initState();
        _checkAuthState();
+       quizManager = QuizManager();
      }
    
      void _checkAuthState() {
        FirebaseAuth.instance.authStateChanges().listen((User? user) {
          if (mounted) {
            setState(() {
-             _user = user; // Set the current user
+             _user = user;
            });
+           if (user != null) {
+             _fetchOtherTopics();
+             _getUserInterests(user.uid);
+             _getUserXPLevel(user.uid);
+             _getUserDisplayName(user.uid); // Call to get user display name
+           }
 
-Inside the Landing Page widget, there are listeners for ``authStateChanges()`` that alter the UI depending on the authentication states of the ``User`` variable. This class also creates an instance of the ``QuizManager`` which shows various quizzes and quiz data thata is retrieved from the datastore associated with the user.
+Inside the Landing Page widget, there are listeners for ``authStateChanges()`` that alter the UI depending on the authentication states of the ``User`` variable. This class also creates an instance of the ``QuizManager`` which shows various quizzes and quiz data thata is retrieved from the datastore associated with the user. Many variables are retrieved due to the amount of information the landing page displays, including ``quizAttemptData`` like in the recent quizzes section and ``user`` data that relates to experience and user interests.
+
+.. code-block:: dart
+
+   void _getUserInterests(String uid) async {
+       try {
+         DocumentSnapshot userSnapshot =
+             await FirebaseFirestore.instance.collection('users').doc(uid).get();
+   
+         if (userSnapshot.exists) {
+           setState(() {
+             userInterests = List<String>.from(userSnapshot.get('interests'));
+
+The UI for the quizzes are split between interests and topics that weren't in the user's interests. Here the function checks if ``userSnapshot.exists`` meaning that the user has selected at least one interest and places the interest and its associated widget in the user interests section of the UI.
+
+.. code-block:: dart
+
+   void _fetchOtherTopics() async {
+       try {
+         if (_user != null) {
+           // Get user's interests from Firestore
+           DocumentSnapshot userSnapshot = await FirebaseFirestore.instance.collection('users').doc(_user!.uid).get();
+           if (userSnapshot.exists) {
+             List<String> userInterests = List<String>.from(userSnapshot.get('interests'));
+   
+             // Query Firestore to get all interests
+             DocumentSnapshot interestsSnapshot = await FirebaseFirestore.instance.collection('interests').doc('interests').get();
+   
+             if (interestsSnapshot.exists) {
+               List<String> allInterests = List<String>.from(interestsSnapshot.get('interests'));
+   
+               // Extract other topics that are not in the user's interests
+               List<String> remainingInterests = allInterests.where((interest) => !userInterests.contains(interest)).toList();
+   
+               // Set the remaining interests as topics
+               setState(() {
+                 otherTopics = remainingInterests.map((interest) => '$interest').toList();
+
+Here the comments are self explanatory. If the user isn't null, the Firestore is checked to get the user's interests. Whatever is ``!userInterests.contains(interest)`` (not in user's interests) will be added as "other topics".
+
+.. code-block:: dart
+   
+   Map<String, dynamic> createQuizAttemptData(Map<String, dynamic> userSummary) {
+       int quizTotal = loadedQuestions.length;
+   
+       return {
+         'timestamp': FieldValue.serverTimestamp(),
+         'userResults': {
+           'quizTotal': quizTotal,
+           'userTotal': -1,
+         },
+         'userSummary': userSummary,
+       };
+
+Quiz metadata is produced to be retrieved when a user clicks on a quiz in quiz history. Much of this is handled in the backend of ``QuizSummaryPage.dart``.
 
 .. _Quiz Page:
 
