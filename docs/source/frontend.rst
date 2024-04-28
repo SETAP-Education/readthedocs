@@ -401,3 +401,120 @@ The same principle is applied here, but for the ``fillInTheBlank`` question type
                      : 'Incorrect. Your answer: ${userResponse} ✘ | The correct Answer is: "${question.correctAnswer}"',
 
 Below the fill in the blank question, this widget takes the question and attempt data to give feedback on responses.
+
+
+
+.. _Quiz Page:
+
+QuizPage.dart
+-------------
+
+.. code-block:: dart
+
+   if (currentQuestionIndex > 0)
+                         Padding(
+                           padding: const EdgeInsets.only(left: 550),
+                           child: IconButton(
+                             // color: tertiary,
+                             // hoverColor: secondary,
+                             icon: Icon(Icons.arrow_left, color: Theme.of(context).colorScheme.primary,),
+                             tooltip: 'Previous question',
+                             onPressed: () {
+                               if (currentQuestionIndex > 0) {
+                                 // If there is a previous question, move to it
+                                 currentQuestionIndex--;
+                                 displayQuestion(currentQuestionIndex, quiz.questionIds);
+                                 setState(() {
+                                   quizCompleted = false;
+                                 });
+
+Here is the button code for navigating through the quiz, in this case, a previous question. ``if (currentQuestionIndex > 0)`` i.e. any question number aside from the first, it will decrement the question index and change the ui contents to the question before. It will also set the ``quizCompleted`` state to false (more important for the last question in set).
+
+.. code-block:: dart
+
+   else
+                         SizedBox(width: 48), // Add a placeholder SizedBox when the condition is false
+                       Padding(
+                         padding: const EdgeInsets.only(right: 550),
+                         child: IconButton(
+                           // color: tertiary,
+                           // hoverColor: secondary,
+                           icon: Icon(Icons.arrow_right, color: Theme.of(context).colorScheme.primary),
+                           tooltip: currentQuestionIndex < loadedQuestions.length - 1
+                               ? 'Next Question'
+                               : 'Submit Quiz',
+                           onPressed: () async {
+                             if (currentQuestionIndex == loadedQuestions.length) {
+                               // If there are more questions, store user answers in Firebase
+                               print("Just before storing the userSummary: $userSummary");
+                               // await storeUserAnswersInFirebase2(userSummary);
+                             }
+                             moveToNextOrSubmit();
+
+These buttons control loading the next question as well as the ``Submit Quiz`` button. This is handled by the ``moveToNextOrSubmit`` function in the backend of this page.
+
+.. code-block:: dart
+
+   Widget buildQuizPage(QuizQuestion question) {
+       return Column(
+         crossAxisAlignment: CrossAxisAlignment.center,
+         children: [
+           SizedBox(height: 20),
+           Text(
+             question.questionText,
+             style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+             textAlign: TextAlign.center,
+           ),
+           SizedBox(height: 45),
+           //This is where the question will be asked / written to the page. The question format for posing the question is universal for all question types thus doesn't need to be type specific.
+   
+           if (question.type == QuestionType.multipleChoice)
+             buildMultipleChoiceQuestion(question.answer as QuestionMultipleChoice),
+           if (question.type == QuestionType.fillInTheBlank)
+             buildFillInTheBlankQuestion(question.answer as QuestionFillInTheBlank, question.key),
+
+The basic quiz page structure is set out where the question and user input will be laid out. This differs depending on the question type.
+
+.. code-block:: dart
+
+   return InkWell(
+             onTap: () {
+               setState(() {
+                 if (isSelected) {
+                   question.selectedOptions.remove(index);
+                 } else {
+                   question.selectedOptions.add(index);
+                 }
+               });
+             },
+             child: Container(
+               padding: EdgeInsets.all(10),
+               margin: EdgeInsets.symmetric(vertical: 8, horizontal: 100),
+               decoration: BoxDecoration(
+                 color: isSelected ? Colors.blue : Colors.white,
+                 borderRadius: BorderRadius.circular(20),
+                 border: Border.all(
+                   color: Colors.blue,
+                   width: 1,
+
+The ``multipleChoice`` question type makes use of selectable ``InkWell`` and ``Container`` widgets that hold the question answers that users can select.
+
+.. code-block:: dart
+
+   child: TextField(
+           controller: question.controller,
+           key: key,
+           onChanged: (text) {
+             setState(() {
+               question.userResponse = text;
+             });
+           },
+           decoration: InputDecoration(
+             hintText: "Enter your answer here",
+             border: OutlineInputBorder(
+               borderRadius: BorderRadius.circular(25),
+             ),
+             filled: true,
+             fillColor: primaryColour,
+
+The ``fillInTheBlank`` question type uses a ``TextField`` widget that can then be retrieved and tested against the answer stored in the database.
