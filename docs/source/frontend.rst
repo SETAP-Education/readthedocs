@@ -250,7 +250,7 @@ More email interaction is defined here. When the email field ``isNotEmpty``, the
 .. _Registration Page:
 
 RegistrationPage.dart
---------------------
+---------------------
 
 The registration page is functionally the same in terms of widgets and visual design, with one big exception.
 
