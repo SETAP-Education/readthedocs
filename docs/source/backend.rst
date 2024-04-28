@@ -190,6 +190,34 @@ This is the code that checks that the email format is in acceptable paramaters a
 
 This code snippet actually validates the email and password fields to move them onto the next page using ``Navigator.pushReplacement``. If the credentials aren't validated against the database, an error is thrown.
 
+.. code-block:: dart
+   
+   Future<bool> _fetchThemePreference(String userId) async {
+       try {
+         // Retrieve theme preference from Firestore
+         DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance
+             .collection('users')
+             .doc(userId)
+             .get();
+   
+         if (documentSnapshot.exists) {
+           return documentSnapshot['darkMode'] ?? false;
+         }
+   
+         // Default to light mode if not specified
+         return false;
+       } catch (e) {
+         print('Error fetching theme preference: $e');
+         // Default to light mode in case of error
+         return false;
+       }
+     }
+   
+     void _setTheme(bool isDarkMode, BuildContext context) {
+       context.read<ThemeNotifier>().setTheme(isDarkMode);
+
+When progressing from the login page to the landing page, the Firestore is checked if ``documentSnapshot.exists``, meaning the user selected the dark theme prior to logging in, meaning the landing page will also display as dark mode. If the theming data wasn't modified or can't be retrieved, the landing page will default to light mode. ``setTheme(isDarkMode)`` is the setter of this if the conditions are fulfilled.
+
 .. _Registration Page:
 
 RegistrationPage.dart
