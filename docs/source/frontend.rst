@@ -143,3 +143,44 @@ Text input is decorated and uniform, using the Google font ``nunito`` across the
 
 Here is the majority of the error handling relating to user input is managed. The text field is checked with ``displayname.isEmpty`` and the button field for interests is checked with ``_selectedInterests.isEmpty``. Direct feedback is given back to the user and once the requirements are satisfied, the user is moved onto a diagnostic test (as a new user).
 
+.. _Error Displayer Page:
+
+ErrorDisplayer.dart
+-------------------
+
+.. code-block:: dart
+
+   return Positioned(
+           top: screenHeight * 0.01,
+           left: screenWidth * 0.15,
+           right: screenWidth * 0.15,
+           child: Container(
+             decoration: BoxDecoration(
+               color: Colors.transparent,
+             ),
+             child: ListView.separated(
+               physics: NeverScrollableScrollPhysics(), 
+               shrinkWrap: true,
+               itemCount: globalErrorManager.errors.length,
+               separatorBuilder: (BuildContext context, int index) {
+                 return SizedBox(height: 8);
+
+The container that holds error messages is defined here with the sizes in ``top, left and right`` placing the error messages at the top of the screen. The background is ``Colors.transparent`` and when multiple errors occur, there is a gap of ``height: 8`` between them. Errors are added to an index and passed into the container.
+
+.. code-block:: dart
+
+   _timer = Timer(Duration(seconds: 4), () {
+                   setState(() {
+                     if (globalErrorManager.errors.length > index) {
+                       globalErrorManager.errors.removeAt(index);
+
+An internal timer exists that makes the container and held error message remain on screen for ``4 seconds``. There is also the code snippet below that dismisses the error message through user gesture ``onTap()``.
+
+.. code-block:: dart
+
+   MouseRegion(
+                         cursor: SystemMouseCursors.click,
+                         child: GestureDetector(
+                           onTap: () {
+                             setState(() {
+                               globalErrorManager.errors.removeAt(index);
