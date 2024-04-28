@@ -184,3 +184,65 @@ An internal timer exists that makes the container and held error message remain 
                            onTap: () {
                              setState(() {
                                globalErrorManager.errors.removeAt(index);
+
+
+.. _Login Page:
+
+LoginPage.dart
+--------------------
+
+.. code-block:: dart
+   
+   child: TextFormField(
+                   controller: _passwordController,
+                   obscureText: !_showPassword, // Correct placement of obscureText
+                   decoration: InputDecoration(
+                     labelText: 'Password',
+                     contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                     focusedBorder: OutlineInputBorder(
+                       borderSide: BorderSide(color: textColour),
+                       borderRadius: BorderRadius.circular(30.0),
+                     ),
+                     enabledBorder: OutlineInputBorder(
+                       borderSide: BorderSide(color: textColour),
+                       borderRadius: BorderRadius.circular(30.0),
+                     ),
+                     suffixIcon: Padding(
+                       padding: EdgeInsets.only(right: 8.0), // Adjust the padding as needed
+                       child: IconButton(
+                         icon: Icon(
+                           _showPassword ? Icons.visibility_off : Icons.visibility,
+                         ),
+                         color: textColour,
+                         onPressed: () {
+                           setState(() {
+                             _showPassword = !_showPassword;
+
+While much of the login page is handled by Firebase and the cloud authentication system, elements of the UI have had modifications applied for security and privacy. Here ``obscureText`` is set by default, hiding the input for the password from the user when it's typed in. The ``sufficIcon`` widget then defines a visibility icon on the input line that ``onPressed`` will ``_showPassword``, setting ``obscureText`` to false.
+
+.. code-block:: dart
+
+   child: GestureDetector(
+                     onTap: () async {
+                       final email = _emailController.text.trim();
+                       if (email.isNotEmpty) {
+                         try {
+                           var user = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+                           if (user.isNotEmpty) {
+                             await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                             
+                             globalErrorManager.pushError("Password reset email sent to $email real");
+                               
+                             
+                           } else {
+   
+                             globalErrorManager.pushError("Password reset email sent to $email not real");
+                             
+                           }
+                         } catch (e) {
+                           print('Error: $e');
+                         }
+                       } else {
+                           globalErrorManager.pushError("Please enter an email");
+
+More email interaction is defined here. When the email field ``isNotEmpty``, the backend will trim any spaces and send it to the backend for authentication that the email exists. If it matches, the email will be sent and a message shown to feedback that. If the email doesn't exist in the Firestore, an error is thrown that the email doesn't exists and nothing happens. The same occurs when nothing is input in the text field. The error manager can also give feedback to the user that an email has been sent through the error labelling system, even if nothing has produced an error.
