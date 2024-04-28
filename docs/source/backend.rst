@@ -287,6 +287,52 @@ The ``_register()`` function contains various constraints the user has to adhere
 
 If all goes well, Firebase is called to create a user in the database with ``userCredential`` and the ``_createDatabase()`` function. Once that process is complete, the page navigates to the ``DisplayUser()`` function located in the ``DisplayNamePage.dart`` file.
 
+.. _Quiz Summary Page:
+
+QuizSummaryPage.dart
+--------------------
+
+.. code-block:: dart
+
+   class QuizSummaryPage extends StatelessWidget {
+     final List<QuizQuestion> loadedQuestions;
+     final Map<String, dynamic> quizAttemptData;
+     final int earnedXp; 
+   
+     QuizSummaryPage({
+       required this.loadedQuestions,
+       required this.quizAttemptData,
+       required this.earnedXp, 
+     });
+
+The ``QuizSummaryPage`` takes 3 parameters that populate the data in the summary page: ``loadedQuestions`` for the questions generated that question, ``quizAttemptData`` for user responses and ``earnedXp`` to display xp earned as a result of completing the quiz.
+
+.. code-block:: dart
+
+   Future<dynamic> getUserResponseForQuestion(QuizQuestion question, Map<String, dynamic> quizAttemptData, int questionIndex) async {
+       dynamic userResponse; // Initialize the userResponse variable
+   
+       quizAttemptData['userSummary'].forEach((questionId, summary) {
+         // Check if 'userResponse' exists for the current question
+         if (summary.containsKey('userResponse')) {
+           // Retrieve 'userResponse' based on question type
+           var summaryUserResponse = summary['userResponse'];
+   
+           // Check question type (assuming multiple choice or fill in the blank)
+           if (question.type == QuestionType.multipleChoice && summaryUserResponse is List<int>) {
+             // Handle 'userResponse' as List<int> (multiple choice)
+             print('Question ID: $questionId, User Response (Multiple Choice): $summaryUserResponse');
+             userResponse = summaryUserResponse;
+           } else if (question.type == QuestionType.fillInTheBlank && summaryUserResponse is String) {
+             // Handle 'userResponse' as String (fill in the blank)
+             print('Question ID: $questionId, User Response (Fill in the Blank): $summaryUserResponse');
+             userResponse = summaryUserResponse;
+      ...
+   return userResponse;
+   }
+
+Here the retrieved variables are compared between the question data and the attempt data. ``summaryUserResponse`` retrieves response data if it's found to match to the given question. This then gets compared to the conditionals below depending on whether the question type is ``multipleChoice`` or ``fillInTheBlank``. Once this has been done for all questions, the frontend can display the results and "mark" accordingly.
+
 .. _Landing Page:
 
 LandingPage.dart
