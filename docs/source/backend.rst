@@ -626,6 +626,32 @@ Here the comments are self explanatory. If the user isn't null, the Firestore is
 
 Quiz metadata is produced to be retrieved when a user clicks on a quiz in quiz history. Much of this is handled in the backend of ``QuizSummaryPage.dart``.
 
+
+.. _Splash Page:
+
+SplashPage.dart
+---------------
+
+.. code-block:: dart
+   
+   class _OpeningPageState extends State<OpeningPage> {
+   
+     void _checkAuthState() async {
+   
+       User? firebaseUser = await FirebaseAuth.instance.authStateChanges().first;
+       
+       if (firebaseUser != null) {
+         print("User signed in");
+         Navigator.pushReplacement(context, MaterialPageRoute(builder:(context) {
+           return LandingPage();
+         },));
+       }
+       else {
+         print("User not signed in");
+       }
+
+This code section checks with Firebase is there is an authorised user logged in. If user is not null, they are signed in and sent to the ``LandingPage()``, else they stay on the splash page. This is especially useful for keeping sessions logged in such as when Internet access disconnects or the page refreshes.
+
 .. _Quiz Page:
 
 quiz.dart
