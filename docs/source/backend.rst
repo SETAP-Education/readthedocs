@@ -333,6 +333,117 @@ The ``QuizSummaryPage`` takes 3 parameters that populate the data in the summary
 
 Here the retrieved variables are compared between the question data and the attempt data. ``summaryUserResponse`` retrieves response data if it's found to match to the given question. This then gets compared to the conditionals below depending on whether the question type is ``multipleChoice`` or ``fillInTheBlank``. Once this has been done for all questions, the frontend can display the results and "mark" accordingly.
 
+.. _Quiz Page:
+
+QuizPage.dart
+-------------
+
+.. code-block:: dart
+   
+   class _QuizPageState extends State<QuizPage> {
+     late TextEditingController fillInTheBlankController;
+     late QuizManager quizManager;
+     late Quiz quiz;
+     late List<QuizQuestion> loadedQuestions = [];
+     int currentQuestionIndex = 0;
+     bool quizCompleted = false;
+     Map<String, dynamic> userSummary = {};
+     bool quizSubmitted = false;
+     int earnedXp = 0; 
+     // Replace the quizId being passed in, it is static for testing purposes.
+     Map<String, dynamic> quizAttemptData = {};
+
+Initialises the variables required to build the quiz layout and contents.
+
+.. code-block:: dart
+   
+   Future<void> loadQuiz(String quizId) async {
+       print("Loading quiz with ID: $quizId");
+   
+       Quiz? loadedQuiz = await quizManager.getQuizWithId(quizId);
+   
+       if (loadedQuiz != null) {
+         setState(() {
+           quiz = loadedQuiz;
+         });
+   
+         // Print quiz details
+         print("Loaded quiz: ${quiz.name}");
+         print("Question IDs: ${quiz.questionIds}");
+   
+         List<QuizQuestion> questions = [];
+         for (String questionId in quiz.questionIds) {
+           print(
+               "1 Fetching Question: $questionId, list length: ${questions.length}");
+   
+           // Fetch the question document directly from Firestore using QuizManager instead
+           QuizQuestion? question =
+               await QuizManager().getQuizQuestionById(questionId);
+   
+           if (question != null) {
+             questions.add(question);
+   
+             // Print question type
+             print("Question Text: ${question.questionText}");
+             print("Question Type: ${question.type}");
+   
+             print("Added question, list length: ${questions.length}");
+
+Here a quiz is loaded using the ``quizManager`` functions to build the structure of the quiz. If loaded successfully, details are collected including ``quiz.name`` and ``questionIds``. An empty list ``questions`` is initialised and a loop iterates through the loaded questions. If they are not empty, they are added to the list. Once it's iterated enough times to fill the question total, the state is updated.
+
+.. code-block:: dart
+
+void moveToNextOrSubmit() async {
+    if (currentQuestionIndex >= loadedQuestions.length) {
+      // Prevents accessing an index that is out of bounds
+      return;
+    }
+
+    QuizQuestion currentQuestion = loadedQuestions[currentQuestionIndex];
+    String questionId = quiz.questionIds[currentQuestionIndex]; // Get the correct questionId
+
+    Map<String, dynamic> questionSummary;
+
+    if (currentQuestion.type == QuestionType.multipleChoice) {
+      if (currentQuestion.answer is QuestionMultipleChoice) {
+        questionSummary = checkUserAnswers(
+          currentQuestion,
+          questionId,
+          currentQuestion.type,
+          userSummary,
+        );
+      } else {
+        print("Error: Incorrect question type for multiple-choice question.");
+        return;
+      }
+    } else if (currentQuestion.type == QuestionType.fillInTheBlank) {
+      if (currentQuestion.answer is QuestionFillInTheBlank) {
+        questionSummary = checkUserAnswers(
+          currentQuestion,
+          questionId,
+          currentQuestion.type,
+          userSummary,
+
+This function handles the navigaton inside the quiz, moving between question numbers. ``currentQuestionIndex >= loadedQuestions.length`` makes sure the navigation cannot progress past the total number of questions. ``questionSummary`` accounts for the responses to that particular question whereas ``userSummary`` evaluates answers across the whole quiz. There are two conditionals for the two ``QuestionTypes`` that handle input differently.
+
+.. code-block:: dart
+   
+   if (currentQuestionIndex < loadedQuestions.length - 1) {
+         setState(() {
+           currentQuestionIndex++;
+           quizCompleted = false;
+         });
+         await displayQuestion(currentQuestionIndex, quiz.questionIds);
+       } else {
+         setState(() {
+           quizCompleted = true;
+         });
+   
+         await storeUserAnswersInFirebase(userSummary);
+         Map<String, dynamic> quizAttemptData = createQuizAttemptData(userSummary);
+
+WIP HERE
+
 .. _Landing Page:
 
 LandingPage.dart
