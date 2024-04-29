@@ -1035,9 +1035,9 @@ The Firebase data store is queried for ``users`` and ``quizHistory``. A ``for lo
          return b.timestamp.compareTo(a.timestamp);
        }));
 
-.. _Level Logic:
+.. _   XP Logic:
 
-levellogic.dart
+xpLogic.dart
 ---------------
 
 This file refers to the logic inside the ranking system each user has. It's initialised with
@@ -1050,60 +1050,85 @@ This file refers to the logic inside the ranking system each user has. It's init
    // max level is 10
    bool reachedMaxLevel = false;
 
-Users have a number, a written rank name associated with the xp number and a maxLevel cap that turns on a boolean.
+Users have a number, a written rank name associated with the xp number and a ``maxLevel`` cap that turns on a boolean.
+
+.. code-block:: dart
+
+   class XpInterface {
+   
+     static List<String> rankList = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Emerald'];
+     static List<int> rankThesholds = [ 20, 40, 60, 80, 100 ];
+   
+     static int getLevel(int xp) {
+        for (int i = 0; i < rankThesholds.length; i++) {
+         if (xp < rankThesholds[i]) {
+           return i;
+         }
+       }
+   
+       return 0;
+     }
+   
+     static String getRank(int xp) {
+       
+       for (int i = 0; i < rankList.length; i++) {
+         if (xp < rankThesholds[i]) {
+           return rankList[i];
+
+The various ranks, their associated levels and thresholds are defined, which can visually be fed back into ``LandingPage.dart``.
 
 .. code-block:: dart
    
-   void setXp(int quizXp){
+   void setXp(BuildContext context, int quizXp){
      xp += quizXp;
    
      // check if level has changed
      if(checkIfLeveledUp() == true){
+       // only need to set level and rank if user has leveled up, otherwise just wasting time
+       level = getLevel();
        if(reachedMaxLevel == true){
-         // print 'congrats! you have leveled up as far as possible' message
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+             content: Text('Congratulations you have reached the maximum level! You are now at level ${level} and rank ${rank}'),
+           ),
+         );
        }
        else{
-         // print 'congrats! you leveled up' message
-       }
-     }
-   
-     level = setLevel();
-     rank = setRank();
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+             content: Text('Congratulations you leveled up! You are now at level ${level} and rank ${rank}'),
+           ),
 
 This function is called after the user completes a quiz and updates their xp level according to their performance which is decided by the quiz/questions. There is also a boolean check if the xp increases rank or reaches max level.
 
 .. code-block:: dart
    
-   int setLevel(){
-     List<int> levels = [100,300,500,1000,1500,2250,3000,4000,5000,7000];
-     int currentLevel = 0;
-     for(int i=0;i<=9;i++){
-       if(xp < levels[i]){
-         currentLevel = i;
-         break;
-       }
-       else{
-         currentLevel = 10;
-         reachedMaxLevel = true;
-       }
+   bool checkIfLeveledUp(){
+     // compare level before and after xp from completed quiz is added
+     int prevLevel = level;
+     int newLevel = getLevel();
+     if(prevLevel != newLevel){
+       return true;
      }
-     return currentLevel;
-   }
+     else{
+       return false;
 
-``setLevel`` is called whenever xp changes, which is used often in the other functions such as ``setXp``. This also sets the rank boundaries that divide the string rank names below:
+``checkIfLeveledUp()`` from the above function is defined here. It takes the previous level based on xp and compares it to the current. This only runs after a quiz is completed, for simplicity.
 
 .. code-block:: dart
    
-   String setRank(){
-     List<String> rankList = ['Copper', 'Silver', 'Gold', 'Pearl', 'Jade', 'Ruby', 'Sapphire', 'Emerald', 'Opal', 'Diamond'];
+   String getRank(int xp){
+     List<String> rankList = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Emerald'];
      String rank = '';
      for(int i=0;i<=9;i++){
-       if(level == i){
+       if(xp == i){
          rank = rankList[i];
        }
      }
      return rank;
+   }
 
+While the ranks are defined further up in this file, the actual rank is applied by converting ``xp`` into ``rank`` by comparing them with ``i``. Since the xp boundaries are directly linked to the ranks in the list, the indexes link to each other directly i.e. Bronze = 20, Silver = 40 etc.
 
 .. _Main:
 
