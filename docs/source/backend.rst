@@ -1170,17 +1170,17 @@ The theme data is initialised in ``ThemeNotifier.dart`` the default is ``lightTh
 
 .. code-block:: dart
 
-Future<void> _updateUserThemePreference(bool isDarkMode) async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({'darkMode': isDarkMode});
-
-The app theme preferences are uploaded to the Firestore for the associated ``user``. This is intended for when users log in or switch between pages, maintaining their theme preference when transitioning between pages.
+   Future<void> _updateUserThemePreference(bool isDarkMode) async {
+       final user = FirebaseAuth.instance.currentUser;
+   
+       if (user != null) {
+         try {
+           await FirebaseFirestore.instance
+               .collection('users')
+               .doc(user.uid)
+               .update({'darkMode': isDarkMode});
+   
+   The app theme preferences are uploaded to the Firestore for the associated ``user``. This is intended for when users log in or switch between pages, maintaining their theme preference when transitioning between pages.
 
 .. _Main:
 
