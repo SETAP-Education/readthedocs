@@ -653,7 +653,7 @@ The app theme is defined here using ``hexadecimal`` and ``ARGB``. These can easi
 .. code-block:: dart
 
    static TextStyle defaultBodyText(BuildContext context) {
-       return GoogleFonts.nunito( //had to change this from roboto
+       return GoogleFonts.nunito( 
          fontSize: 18,
          fontWeight: FontWeight.w300,
          letterSpacing: -0.5,
@@ -699,3 +699,22 @@ Here an appbar holds the toggle button for light/dark mode. The current theme is
 
 The button shape and style is defined with ``RoundedRectangleBorder`` and ``backgroundColor`` dictating the shape and colour of various buttons across the app.
 
+.. _Button:
+
+Button.dart
+-----------
+
+``Button.dart`` is a dedicated file that is used to define the design of a button to more specific constraints. This then gets passed to functions that use UI elements to prevent duplication of code.
+
+.. code-block:: dart
+
+   class Button extends StatelessWidget {
+   
+     const Button({ super.key, this.onClick, this.child, this.important = false, this.width = double.infinity });
+   
+     final bool important;
+     final Function? onClick; 
+     final Widget? child; 
+     final double width;
+
+The variables the button widget is concerned with is defined here, mostly related to generic functions a button would require such as ``Function?`` (action to perform on click) and ``Widget?`` which gets passed by the function the Button is being used by.
