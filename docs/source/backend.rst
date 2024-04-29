@@ -930,6 +930,111 @@ The ``QuizManager`` class picks through the tagging system and converts Firestor
 
 ``withConverter`` can intercahnge between the object and the database fields. We take the converted parameters and test against various conditionals such as if the reference exists (if no, return null). This is done with all the search parameters for quizzes.
 
+.. code-block:: dart
+
+   Future<List<QuizQuestion>> getQuizQuestions() async {
+       var db = FirebaseFirestore.instance;
+   
+       var questionRef = await db
+           .collection("questions")
+           .withConverter(
+               fromFirestore: QuizQuestion.fromFirestore,
+               toFirestore: (QuizQuestion q, _) => q.toFirestore())
+           .get();
+   
+       return List.generate(
+           questionRef.docs.length, (index) => questionRef.docs[index].data());
+     }
+
+The ``QuizQuestion`` here is taken from the Firestore to be used elsewhere like in quiz.dart. The opposite conversion is done with this function.
+
+.. code-block:: dart
+
+   static void addQuizQuestionToDatabase(QuizQuestion question) {
+       var db = FirebaseFirestore.instance;
+   
+       db.collection("questions").doc().set(question.toFirestore());
+     }
+
+Similar function exist in the same file for conversion of entire quizzes.
+
+.. code-block:: dart
+
+   Future<String> generateQuiz(List<String> tags, int userLevel, int range, int questionCount, { String name = "" }) async {
+   
+       print("Quiz Generating...");
+   
+       String outputQuizId = "";
+   
+       var db = FirebaseFirestore.instance;
+   
+       // This returns all questions that fit 
+       var questionRef = await db
+           .collection("questions")
+           .where("tags", arrayContainsAny: tags)
+           .where("difficulty", isGreaterThan: (userLevel - range))
+           .where("difficulty", isLessThan: (userLevel + range))
+           .withConverter(
+               fromFirestore: QuizQuestion.fromFirestore,
+               toFirestore: (QuizQuestion q, _) => q.toFirestore())
+           .get();
+   
+       var questions = List.generate(
+           questionRef.docs.length, (index) => questionRef.docs[index].data());
+
+This function is important for generating quizzes based on the user's data that gets fed back into the Firestore using ``q.toFirestore())`` that gets used by other functions. The quiz manager will attempt to find as many questions that match the above criteria, but if none or too little are found, the manager will pick randomly:
+
+.. code-block:: dart
+
+   print("Randomly picking Questions");
+         
+         var rng = Random();
+         for (int i = 0; i < questionCount; i++) {
+           var j = rng.nextInt(questions.length);
+   
+           while (questionNumbers.contains(j)) {
+             j = rng.nextInt(questions.length);
+
+As shown with the ``rng`` variable.
+
+.. code-block:: dart
+
+   Future<List<RecentQuiz>> getRecentQuizzesForUser(String userId) async {
+       List<RecentQuiz> recent = [];
+   
+       var db = FirebaseFirestore.instance; 
+   
+       var userRef = db.collection("users").doc(userId);
+   
+       var quizzes = await userRef.collection("quizHistory").get();
+   
+       for (var i in quizzes.docs) {
+         Map<String, dynamic> data = i.data(); 
+   
+         String id = i.id;
+   
+         Quiz? q = await getQuizWithId(id);
+         
+         if (q != null) {
+   
+           // We have a quiz
+   
+           RecentQuiz recentQuiz = RecentQuiz(); 
+           recentQuiz.id = id; 
+           recentQuiz.name = q.name;
+           recentQuiz.timestamp = data["timestamp"];
+           recentQuiz.xpEarned = data.containsKey("xpGain") ? data["xpGain"] : 0;
+           
+           recent.add(recentQuiz);
+
+The Firebase data store is queried for ``users`` and ``quizHistory``. A ``for loop`` then iterates through each quiz taken and retrieves its id, name, date taken and xp gained. The quizzes are then sorted by recency as shown in the code snippet below:
+
+.. code-block:: dart
+
+   recent.sort(((a, b) {
+         return b.timestamp.compareTo(a.timestamp);
+       }));
+
 .. _Level Logic:
 
 levellogic.dart
