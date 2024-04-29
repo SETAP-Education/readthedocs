@@ -622,3 +622,80 @@ SplashPage.dart
                        ),
 
 Makes up the large splash text that the user is shown upon opening the application for the first time. This page is mainly populated by other files such as ``RegistrationPage.dart`` and ``LoginPage.dart``.
+
+.. _App Theme:
+
+AppTheme.dart
+-------------
+
+.. code-block:: dart
+
+   class AppTheme {
+   
+     static ThemeData lightTheme = ThemeData(
+       colorScheme: const ColorScheme.light(
+         background: Colors.transparent,
+         primary: Color(0xFF19c37d),
+         secondary: Color(0xFF333333),
+         primaryContainer: Color.fromARGB(255, 255, 255, 255),
+         secondaryContainer: Color.fromARGB(255, 231, 231, 231),
+         error: Colors.orange,
+       ),
+        scaffoldBackgroundColor: Color.fromARGB(255, 230, 231, 236),
+       textTheme: const TextTheme(
+         bodyMedium: TextStyle(color: Color(0xFF333333)),
+       ),
+       textSelectionTheme: TextSelectionThemeData(
+         cursorColor: Colors.blue,
+
+The app theme is defined here using ``hexadecimal`` and ``ARGB``. These can easily be adjusted and changed to change UI colour schemes throughout the app. Here it's defined for light mode, another definition is made for dark mode.
+
+.. code-block:: dart
+
+   static TextStyle defaultBodyText(BuildContext context) {
+       return GoogleFonts.nunito( //had to change this from roboto
+         fontSize: 18,
+         fontWeight: FontWeight.w300,
+         letterSpacing: -0.5,
+         color: Theme.of(context).colorScheme.secondary,
+       );
+
+Much like colour theming, text styles can be defined and used throughout the application.
+
+.. code-block:: dart
+   
+   static AppBar buildAppBar(BuildContext context, String title, bool includeTitleAndIcons, bool autoImply, String dialogTitle, Text contentText) {//, bool automaticallyImplyLeading) {
+       // Get the current theme
+       ThemeNotifier themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+   
+       // Define icons for light and dark mode
+       Icon lightModeIcon = Icon(Icons.light_mode_outlined, color: Theme.of(context).colorScheme.secondary);
+       Icon darkModeIcon = Icon(Icons.dark_mode_outlined, color: Theme.of(context).colorScheme.secondary);
+   
+       // Determine the current icon based on the theme
+       Icon currentIcon = themeNotifier.isDarkMode ? lightModeIcon : darkModeIcon;
+
+Here an appbar holds the toggle button for light/dark mode. The current theme is held by the theme ``themeNotifier``, the backend the notifies the app of the active theme and updates when toggled.
+
+.. code-block:: dart
+
+   static ElevatedButton buildElevatedButton({
+       required VoidCallback onPressed,
+       required String buttonText,
+       BuildContext? context,
+     }) {
+       return ElevatedButton(
+         onPressed: onPressed,
+         style: ElevatedButton.styleFrom(
+           backgroundColor: Color(0xFF19c37d),
+           shape: RoundedRectangleBorder(
+             borderRadius: BorderRadius.circular(15.0), // 15 for rounded edges, 5 for curved corners
+           ),
+           // Add other button style configurations as needed
+         ),
+         child: Text(
+           buttonText,
+           style: context != null ? AppTheme.defaultBodyText(context) : null,
+
+The button shape and style is defined with ``RoundedRectangleBorder`` and ``backgroundColor`` dictating the shape and colour of various buttons across the app.
+
