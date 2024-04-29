@@ -1130,6 +1130,58 @@ This function is called after the user completes a quiz and updates their xp lev
 
 While the ranks are defined further up in this file, the actual rank is applied by converting ``xp`` into ``rank`` by comparing them with ``i``. Since the xp boundaries are directly linked to the ranks in the list, the indexes link to each other directly i.e. Bronze = 20, Silver = 40 etc.
 
+.. _Theme Notifier:
+
+ThemeNotifier.dart
+------------------
+
+.. code-block:: dart
+   
+   class ThemeNotifier extends ChangeNotifier {
+     bool _isDarkMode = true;
+     ThemeData _currentTheme = AppTheme.lightTheme;
+   
+     ThemeData get currentTheme => _currentTheme;
+   
+     bool get isDarkMode => _isDarkMode;
+
+The theme data is initialised in ``ThemeNotifier.dart`` the default is ``lightTheme``, which is toggled by setting ``isDarkMode`` to ``true``.
+
+.. code-block:: dart
+
+   void setTheme(bool isDarkMode) {
+       _isDarkMode = isDarkMode;
+       _currentTheme = isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme;
+       notifyListeners();
+   
+       // Update user preference in Firestore if user is logged in
+       _updateUserThemePreference(isDarkMode);
+     }
+   
+     void toggleTheme() {
+       _isDarkMode = !_isDarkMode;
+       _currentTheme = _isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme;
+       notifyListeners();
+   
+       // Update user preference in Firestore if user is logged in
+       _updateUserThemePreference(_isDarkMode);
+
+``setTheme`` is concerned with the update of light mode to dark mode. ``toggleTheme`` switches between the two by manipulating the ``_isDarkMode`` variable by setting it to true/false based on user preference.
+
+.. code-block:: dart
+
+Future<void> _updateUserThemePreference(bool isDarkMode) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'darkMode': isDarkMode});
+
+The app theme preferences are uploaded to the Firestore for the associated ``user``. This is intended for when users log in or switch between pages, maintaining their theme preference when transitioning between pages.
+
 .. _Main:
 
 main.dart
