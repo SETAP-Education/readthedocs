@@ -657,7 +657,7 @@ This code section checks with Firebase is there is an authorised user logged in.
 quiz.dart
 ---------
 
-The main logic of the quizzes users will interact with.
+This is one of the most important files in the project as it defines how the quiz operates using factories and many variables.
 
 .. code-block:: dart
 
@@ -700,6 +700,110 @@ The ``QuestionAnswer`` class is responsible for taking user input and converting
          );
 
 Here a map is formed to make a keypair of the options and correct answers to be placed in the Firestore. The factory option also creates a QuestionMultipleChoice object from the Firestore map, allowing for flexible conversion of data from the app and the database.
+
+.. code-block:: dart
+   
+   Map<String, dynamic> toFirestore() {
+       return {
+         "correctAnswer": correctAnswer,
+         "userResponse": userResponse,
+       };
+     }
+   
+     factory QuestionFillInTheBlank.fromMap(Map<String, dynamic> map) {
+       return QuestionFillInTheBlank(
+         correctAnswer: map["correctAnswer"] ?? "",
+         userResponse: map["userResponse"] ?? "",
+       );
+
+Similar to ``QuestionMultipleChoice``, a map of ``correctAnswer`` and ``userResponse`` is made to send back to the Firestore. Functionally they are not different but their user input mediums are different (selection vs textbox). 
+
+.. code-block:: dart
+
+   Map<String, dynamic> checkUserAnswers(
+     QuizQuestion question,
+     String questionId,
+     QuestionType currentType,
+     Map<String, dynamic> userSummary,
+   ) {
+     if (currentType == QuestionType.multipleChoice) {
+       if (question.answer is QuestionMultipleChoice) {
+         return checkMultipleChoiceAnswer(
+           question.answer as QuestionMultipleChoice,
+           questionId,
+           userSummary,
+         );
+       } else {
+         print("Error: Incorrect question type for multiple-choice question.");
+         return userSummary;
+       }
+     } else if (currentType == QuestionType.fillInTheBlank) {
+       if (question.answer is QuestionFillInTheBlank) {
+         return checkFillInTheBlankAnswer(
+           question.answer as QuestionFillInTheBlank,
+           questionId,
+           userSummary,
+         );
+       } else {
+         print("Error: Incorrect question type for fill-in-the-blank question.");
+         return userSummary;
+
+The function names are self-explanatory. The function first checks what kind of question is being checked. If multiple choice, ``checkMultipleChoiceAnswer`` is returned with ``userSummary`` and ``questionId``. The same applies for fill in the blank questions, instead ``checkFillInTheBlankAnswer`` is called that performs the same operattion with questions of that type.
+
+.. code-block:: dart
+   
+   Map<String, dynamic> checkMultipleChoiceAnswer(
+     QuestionMultipleChoice question,
+     String questionId,
+     Map<String, dynamic> userSummary,
+   ) {
+     List<int> correctAnswers = question.correctAnswers;
+     List<int> selectedOptions = question.selectedOptions;
+     correctAnswers.sort();
+     selectedOptions.sort();
+   
+     print("$selectedOptions");
+   
+     if (areListsEqual(correctAnswers, selectedOptions)) {
+       userSummary[questionId] = {
+         'correctIncorrect': 'Correct',
+         'userResponse': question.selectedOptions,
+         'correctAnswers': correctAnswers,
+       };
+     } else {
+       // The user's answer is incorrect
+       print("Incorrect! User selected the wrong options.");
+       userSummary[questionId] = {
+         'correctIncorrect': 'Incorrect',
+         'userResponse': question.selectedOptions,
+         'correctAnswers': correctAnswers,
+
+This is what is actually called in ``checkUserAnswers`` for multiple choice questions. if the ``selectedOptions`` and ``correctAnswers`` are equal, it's returned as true and the user gets that question right, else it's incorrect and they get it wrong. They are compared using lists.
+
+.. code-block:: dart
+
+   Map<String, dynamic> checkFillInTheBlankAnswer(
+     QuestionFillInTheBlank question,
+     String questionId,
+     Map<String, dynamic> userSummary,
+   ) {
+     // Get the correct answer for the question
+     String correctAnswer = question.correctAnswer.toLowerCase();
+   
+     // Get the user's response
+     String userResponse = question.userResponse.toLowerCase();
+   
+     // Check if the user's response matches the correct answer
+     bool isCorrect = correctAnswer == userResponse;
+   
+     // Update the user summary
+     userSummary[questionId] = {
+       'correctIncorrect': isCorrect ? 'Correct' : 'Incorrect',
+       'userResponse': userResponse,
+       'correctAnswer': correctAnswer,
+     };
+
+Similar to above, though the strings are compared directly by converting both the answer and user response to lowercase using ``.toLowerCase()`` that ensures that capitalisation isn't an issue in the marking process.
 
 .. code-block:: dart
 
