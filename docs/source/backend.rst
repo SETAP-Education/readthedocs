@@ -626,6 +626,22 @@ Here the comments are self explanatory. If the user isn't null, the Firestore is
 
 Quiz metadata is produced to be retrieved when a user clicks on a quiz in quiz history. Much of this is handled in the backend of ``QuizSummaryPage.dart``.
 
+.. _   Settings Page:
+
+SettingsPage.dart
+-----------------
+
+.. code-block:: dart
+   
+   class _SettingsDisplayUserState extends State<SettingsDisplayUser> {
+     final TextEditingController _nameController = TextEditingController();
+     User? _user;
+     List<String> _selectedInterests = [];
+     List<String> _interestsList = [];
+     String _displayName = '';
+     QuizManager quizManager = QuizManager();
+
+The settings page is functionally identical to ``DisplayNamePage.dart``. More of the difference are explained on the front end. As the code snippet above shows, the data being modified is the same as if a new user was registering.
 
 .. _Splash Page:
 
@@ -1280,6 +1296,46 @@ Here the question "snapshot" from the quiz attempt is retrieved. It will take th
 
 As shown on the front end, ``_nicifyDateTime`` specifies the months and returns the quiz's timestamp in the day and month completed as opposed to Dart's default method of timestamps which uses nanoseconds, which isn't user friendy to display.
 
+.. _User Info:
+
+UserInfo.dart
+-------------
+
+.. code-block:: dart
+
+   var db = FirebaseFirestore.instance;
+   
+       var collection = await db.collection("users").doc(widget.userId).get();
+   
+       var data = collection.data();
+   
+       if (data == null ) {
+         return; 
+       }
+   
+       if (data.containsKey("xpLvl")) {
+         setState(() {
+          
+           currentXpOverall = data["xpLvl"];
+           print(currentXpOverall);
+           currentLevel = XpInterface.getLevel(currentXpOverall);
+   
+           if (XpInterface.rankList[currentLevel] == "Emerald") {
+             currentLevelProgress = currentXpOverall - prevLevelMax;
+           }
+           else {
+             currentLevelMax = XpInterface.rankThesholds[currentLevel];
+             if (currentLevel > 0) {
+               prevLevelMax = XpInterface.rankThesholds[currentLevel - 1];
+             }
+             else {
+               prevLevelMax = 0;
+             }
+             
+             currentLevelProgress = currentXpOverall - prevLevelMax;
+
+The variables are retrieved from the Firestore in a format that the application can use in other functions. ``xpLevel`` and ``users`` are used frequently from here in other applications, typically with ``users.[variable]``.
+
 .. _Main:
 
 main.dart
@@ -1294,6 +1350,6 @@ There is not much in terms of backend for the ``main.dart`` file. It's responsib
      await Firebase.initializeApp(
        options: DefaultFirebaseOptions.currentPlatform,
      );
-     
+     create: (context) => ThemeNotifier(),
      runApp(const MyApp());
    }
