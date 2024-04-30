@@ -583,11 +583,48 @@ At the top of the landing page, a banner is generated that allows the user to ta
 
 The ``interests`` container is created here, with the user's selected interests being retrieved with ``snapshot.data``. The interests are sorted in a grid and placed in ``InkWell`` containers. Selecting one of these interests will ``generateQuiz`` of said interests at the index selected and move the user to the ``QuizPage``. This structure is exactly the same for "other interests".
 
+.. _Settings Page:
+
+SettingsPage.dart
+-----------------
+
+.. code-block:: dart
+
+   Button(
+                   important: false,
+                   width: 450,
+                   onClick: () {
+                     Navigator.push(
+                       context,
+                       MaterialPageRoute(
+                         builder: (context) => SettingsDisplayUser(),
+                       ),
+                     );
+                   },
+                   child: Text('Change display name/ interests', style: GoogleFonts.nunito(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                 ),
+                 SizedBox(height: 20),
+                 Button(
+                   important: true,
+                   width: 450,
+                   onClick: () {
+                     FirebaseAuth.instance.signOut();
+                     Navigator.push(
+                       context,
+                       MaterialPageRoute(
+                         builder: (context) => LoginPage(),
+                       ),
+                     );
+                   },
+                   child: Text('Sign out', style: GoogleFonts.nunito(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                 ),
+
+The settings page comprises of two buttons that navigate to the ``SettingsDisplayUser`` function and ``LoginPage`` function respectively. The former navigates to a variation of the ``DisplayNamePage`` function that runs on first registering. The only difference is that the diagnostic test doesn't run after submitting the settings page, as settings are only visible to established users.
 
 .. _Splash Page:
 
 SplashPage.dart
--------------
+---------------
 
 .. code-block:: dart
 
@@ -820,3 +857,85 @@ In the frontend, recent quizzes are loaded from all quizzes the user has complet
 
 The actual data to be retrieved is taken from the datastore on the backend of this page. Functions that retrieve the data like ``_getloadedQuestions`` are passed to the front end to display quiz name data, xp earned and formatting functions like ``_nicifyDateTime`` that make the passed data display in a human-friendly format.
 
+.. _Tabber Bar:
+
+TabBar.dart
+------------------
+
+.. code-block:: dart
+   
+   return Container(
+         width: double.infinity,
+         child: Row(
+           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+           crossAxisAlignment: CrossAxisAlignment.center,
+           children: [
+             for (int idx = 0; idx < widget.options.length; idx++)
+               MouseRegion(
+                 cursor: SystemMouseCursors.click,
+                 child: GestureDetector(
+                   onTap: () {
+                     setState(() {
+                       selected = widget.options[idx];
+                     });
+                   },
+                   child:  Column(
+                     children: [ 
+                       Text(widget.options[idx], style: GoogleFonts.nunito(
+                         fontSize: 18, 
+
+Like ``Button`` and ``QuestionCard``, this page is purely to define the layout of a widget to be imported and used in other pages. Its dimensions are defined as above and the ``Text`` class is constrained to the design documentation with size ``18`` and ``nunito`` font.
+
+.. _Tabber Bar:
+
+UserInfo.dart
+------------------
+
+.. code-block:: dart
+   
+   Image.asset("assets/images/${XpInterface.getRank(currentXpOverall).toLowerCase()}.png", width: 128, height: 128),
+               
+               const SizedBox(height: 16.0),
+   
+               Text(XpInterface.getRank(currentXpOverall), style: GoogleFonts.nunito(fontWeight: FontWeight.bold, fontSize: 30)),
+   
+               if (XpInterface.getRank(currentXpOverall) != "Emerald")
+                 SizedBox(
+                   width: double.infinity,
+                   child: RichText(
+                     text: TextSpan(
+                       text: currentLevelProgress.toString(),
+                       style: GoogleFonts.nunito(
+                         color: Theme.of(context).textTheme.bodyMedium!.color,
+                         fontSize: 22, 
+                         fontWeight: FontWeight.bold
+                       ),
+                       children: [
+                         TextSpan(
+                           text: " / ${currentLevelMax - prevLevelMax}",
+                           style: GoogleFonts.nunito(
+                             color: Colors.black.withOpacity(0.3),
+                             fontSize: 16, 
+                             fontWeight: FontWeight.bold
+                           )
+                         ),
+   
+                         TextSpan(
+                           text: " xp",
+
+This sets out the container for the rank and experience data that will be displayed from the user's data. This is defined for all ranks that are not ``Emerald``, a special cause is outlined in the same file when it is.
+
+.. code-block:: dart
+
+   const SizedBox(height: 16),
+   
+               TabBarCustom(options: const ["Recent" /*, "Milestones" */],),
+   
+               const SizedBox(height: 16),
+   
+               const Expanded(
+                 child: SizedBox(
+                   child: SingleChildScrollView(
+                     child:  RecentQuizzes()
+
+Here the section holding ``RecentQuiz`` data is defined.
