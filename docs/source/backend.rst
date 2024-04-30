@@ -1182,6 +1182,104 @@ The theme data is initialised in ``ThemeNotifier.dart`` the default is ``lightTh
    
    The app theme preferences are uploaded to the Firestore for the associated ``user``. This is intended for when users log in or switch between pages, maintaining their theme preference when transitioning between pages.
 
+.. _Recent Quizzes:
+
+RecentQuizzes.dart
+------------------
+
+.. code-block:: dart
+   
+   class RecentQuizzesState extends State<RecentQuizzes> {
+   
+     QuizManager quizManager = QuizManager();
+     User? _user;
+     late List<QuizQuestion> loadedQuestions = [];
+     Map<String, dynamic> quizAttemptData = {};
+     Map<String, dynamic> userSummary = {};
+     int earnedXp = 0; 
+     late Quiz quiz;
+
+Variables that get passed to the front end to displayed are initialised here. Not all of the variables stored in something like ``userSummary`` will be used, but the important ones like ``earnedXp``.
+
+
+.. code-block:: dart
+   
+   Future<void> _getloadedQuestions(String quizId) async {
+       // int currentQuestionIndex = 0;
+   
+       if (mounted) {
+         // print("Loading quiz with ID: $quizId");
+   
+         Quiz? loadedQuiz = await quizManager.getQuizWithId(quizId);
+   
+         if (loadedQuiz != null) {
+           setState(() {
+             quiz = loadedQuiz;
+           });
+   
+           List<QuizQuestion> questions = [];
+           for (String questionId in quiz.questionIds) {
+             QuizQuestion? question = await QuizManager().getQuizQuestionById(questionId);
+   
+             if (question != null) {
+               questions.add(question);
+
+Here the question "snapshot" from the quiz attempt is retrieved. It will take the question ids used in the attempt and reload them into the quiz builder along with the quiz attempt data below:
+
+.. code-block:: dart
+
+   Future<void> _loadQuizAttemptData(String quizId) async {
+       if (_user != null && mounted) {
+         try {
+           final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
+           final DocumentReference userDoc = userCollection.doc(_user!.uid);
+   
+           final CollectionReference quizHistoryCollection = userDoc.collection('quizHistory').doc(quizId).collection('attempts');
+   
+           final QuerySnapshot attemptsSnapshot = await quizHistoryCollection.orderBy('timestamp', descending: true).limit(1).get();
+   
+           if (attemptsSnapshot.docs.isNotEmpty && mounted) {
+             final attemptData = attemptsSnapshot.docs.first.data();
+             setState(() {
+               if (attemptData != null) {
+                 Map<String, dynamic> attemptDataMap = attemptData as Map<String, dynamic>;
+                 Map<String, dynamic> userResults = attemptDataMap['userResults'];
+                 Map<String, dynamic> userSummary = attemptDataMap['userSummary'];
+                 Timestamp? timestamp = attemptDataMap['timestamp'];
+   
+                 if (userResults.isNotEmpty && userSummary.isNotEmpty && timestamp != null) {
+                   quizAttemptData = {
+                     'timestamp': FieldValue.serverTimestamp(),
+                     'userResults': {
+                       'quizTotal': userResults['quizTotal'],
+                       'userTotal': userResults['userTotal'],
+                     },
+                     'userSummary': userSummary,
+
+
+.. code-block:: dart
+   
+   final List<String> months = [
+         'January',
+         'February',
+         'March',
+         'April',
+         'May',
+         'June',
+         'July',
+         'August',
+         'September',
+         'October',
+         'November',
+         'December'
+       ];
+   
+     String _nicifyDateTime(DateTime dateTime) {
+   
+       return "${dateTime.day} ${months[dateTime.month - 1]}";
+
+As shown on the front end, ``_nicifyDateTime`` specifies the months and returns the quiz's timestamp in the day and month completed as opposed to Dart's default method of timestamps which uses nanoseconds, which isn't user friendy to display.
+
 .. _Main:
 
 main.dart
