@@ -718,3 +718,105 @@ Button.dart
      final double width;
 
 The variables the button widget is concerned with is defined here, mostly related to generic functions a button would require such as ``Function?`` (action to perform on click) and ``Widget?`` which gets passed by the function the Button is being used by.
+
+.. _Question Card:
+
+QuestionCard.dart
+-----------------
+
+.. code-block:: dart
+
+   class QuestionCard extends StatelessWidget {
+   
+     const QuestionCard({ super.key, required this.question, this.onRightArrow, this.onLeftArrow });
+   
+     final QuizQuestion question;
+     final Function? onRightArrow;
+     final Function? onLeftArrow;  
+
+The ``QuestionCard`` file defines the layout of the page ``quiz.dart`` will fill. It defines the containers for the ``question`` and respective arrow keys responsible for navigating the quiz. Like ``Button.dart``, this file is made to reduce duplicating large amounts of code.
+
+.. code-block:: dart
+
+   [
+                   Text(
+                   question.questionText, 
+                   style: GoogleFonts.nunito(
+                     textStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)
+                   )
+                   ,
+                   ),
+                   buildTypeTag(),
+                   
+                   if (onRightArrow != null)
+                     Align(
+                       alignment: Alignment.centerRight,
+                       child: IconButton(
+                         icon: const Icon(Icons.arrow_right),
+                         onPressed: () => onRightArrow,
+                       ),
+                     ),
+   
+                   if (onLeftArrow != null)
+                     Align(
+                       alignment: Alignment.centerLeft,
+                       child: IconButton(
+                         icon: const Icon(Icons.arrow_left),
+                         onPressed: () => onLeftArrow,
+                       ),
+                     ),
+
+The actual contents of the text and buttons are passed here, with ``question.questionText`` displaying the question and the ``onPressed`` functions for the buttons being defined for navigation.
+
+.. _Recent Quizzes:
+
+RecentQuizzes.dart
+------------------
+
+.. code-block:: dart
+
+   List<RecentQuiz> quizzes = snapshot.data! ?? [];
+               int numRecentQuizzes = quizzes.length;
+               int numQuizzesPerRow = 1;
+               int numRows = (numRecentQuizzes / numQuizzesPerRow).ceil();
+               List<Widget> rows = List.generate(numRows, (rowIndex) {
+                 List<Widget> rowChildren = [];
+                 for (int i = 0; i < numQuizzesPerRow; i++) {
+                   int index = rowIndex * numQuizzesPerRow + i;
+                   const SizedBox(height: 10);
+                   if (index < numRecentQuizzes) {
+                     rowChildren.add(
+
+In the frontend, recent quizzes are loaded from all quizzes the user has completed and a row is added for each using ``rowChildren.add`` through placing them in a list to stack vertically. Only one quiz is loaded per row with ``numQuizzesPerRow = 1``.
+
+.. code-block:: dart
+
+   child: InkWell(
+                               onTap: () async {
+                                 await _getloadedQuestions(quizzes[index].id);
+                                 await _loadQuizAttemptData(quizzes[index].id);
+                                 earnedXp = quizzes[index].xpEarned;
+                                 _quizSummaryButton(loadedQuestions, quizAttemptData);
+                               },
+                               child: Padding(
+                                 padding: const EdgeInsets.symmetric(horizontal: 14),
+                                 child: Row(
+                                   children: [ 
+                                     Column(
+                                       mainAxisAlignment: MainAxisAlignment.center,
+                                       crossAxisAlignment: CrossAxisAlignment.start,
+                                       children: [
+                                         Text(quizzes[index].name, 
+                                           style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.bold),
+                                         ),
+                                         Text(_nicifyDateTime(DateTime.fromMillisecondsSinceEpoch(quizzes[index].timestamp.millisecondsSinceEpoch)), 
+                                           style: GoogleFonts.nunito(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w600, fontStyle: FontStyle.italic),
+                                         )
+                                       ],
+                                     ),
+                                     Spacer(), 
+   
+                                     Text("+ ${quizzes[index].xpEarned}xp",
+
+The actual data to be retrieved is taken from the datastore on the backend of this page. Functions that retrieve the data like ``_getloadedQuestions`` are passed to the front end to display quiz name data, xp earned and formatting functions like ``_nicifyDateTime`` that make the passed data display in a human-friendly format.
+
