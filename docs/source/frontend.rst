@@ -47,7 +47,9 @@ Text Colour: 0xFFE7E7E7
 
 Iconography
 -----------
+Icons in the application are taken from the default Flutter iconography package provided by ``material.dart``.
 
+https://timmaffett.github.io/material_symbols_icons
 
 Pages
 =====
