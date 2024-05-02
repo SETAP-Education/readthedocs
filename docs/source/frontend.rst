@@ -51,9 +51,9 @@ Icons in the application are taken from the default Flutter iconography package 
 
 https://timmaffett.github.io/material_symbols_icons
 
-All images are used under Free License.
+Rank and interest icons created by Henry Gronow
 
-The main splash image was generated using Copilot.
+Main splash icon created by Migle Vaivadaite
 
 Pages
 =====
