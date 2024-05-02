@@ -1,9 +1,7 @@
-Template for the Read the Docs tutorial
+Documentation for Quizzical
 =======================================
 
-This GitHub template includes fictional Python library
-with some basic Sphinx docs.
+This is the supplementary documentation for our quizzing app: Quizzical.
 
-Read the tutorial here:
-
-https://docs.readthedocs.io/en/stable/tutorial/
+You can see the raw code for the read the docs site in the docs folder in this repo.
+Relevant pages are under ``backend.rs`` and ``frontend.rs``
